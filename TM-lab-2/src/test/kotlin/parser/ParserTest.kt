@@ -8,15 +8,14 @@ internal class ParserTest {
     private val parser = Parser()
 
     private companion object {
-        fun getNumberTree() = Tree(
+        fun getExprTree(
+            factor: Tree,
+            sign: (Tree) -> Tree = ::getSignTree
+        ) = Tree(
             "E", listOf(
                 Tree(
                     "T", listOf(
-                        Tree(
-                            "F", listOf(
-                                Tree("n")
-                            )
-                        ),
+                        sign(factor),
                         Tree("T'")
                     )
                 ),
@@ -24,40 +23,54 @@ internal class ParserTest {
             )
         )
 
-        fun getBracketTree(inside: Tree) = Tree(
-            "E", listOf(
-                Tree(
-                    "T", listOf(
-                        Tree(
-                            "F", listOf(
-                                Tree("("),
-                                inside,
-                                Tree(")")
-                            )
-                        ),
-                        Tree("T'")
-                    )
-                ),
-                Tree("E'")
+        private fun getSignTree(factor: Tree) = Tree(
+            "S", listOf(
+                factor
             )
         )
 
-        fun getFunctionTree(inside: Tree) = Tree(
-            "E", listOf(
+        fun getNumberTree() = getExprTree(
+            factor = Tree(
+                "F", listOf(
+                    Tree("n")
+                )
+            )
+        )
+
+        fun getBracketTree(expr: Tree) = getExprTree(
+            factor = Tree(
+                "F", listOf(
+                    Tree("("),
+                    expr,
+                    Tree(")")
+                )
+            )
+        )
+
+        fun getFunctionTree(expr: Tree) = getExprTree(
+            factor = Tree(
+                "F", listOf(
+                    Tree("f("),
+                    expr,
+                    Tree(")")
+                )
+            )
+        )
+
+        fun getUnaryMinusTree(factor: Tree) = getExprTree(
+            factor = factor,
+            sign = { _factor ->
                 Tree(
-                    "T", listOf(
+                    "S", listOf(
+                        Tree("-"),
                         Tree(
                             "F", listOf(
-                                Tree("f("),
-                                inside,
-                                Tree(")")
+                                _factor
                             )
                         ),
-                        Tree("T'")
                     )
-                ),
-                Tree("E'")
-            )
+                )
+            }
         )
     }
 
@@ -82,9 +95,28 @@ internal class ParserTest {
     }
 
     @Test
+    fun testEmptyBracket() {
+        val input = "()".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
+    }
+
+    @Test
     fun testFunction() {
         val input = "f(1)".byteInputStream()
         val expected = getFunctionTree(getNumberTree())
         Assertions.assertEquals(expected, parser.parse(input))
+    }
+
+    @Test
+    fun testUnaryMinus() {
+        val input = "-1".byteInputStream()
+        val expected = getUnaryMinusTree(Tree("n"))
+        Assertions.assertEquals(expected, parser.parse(input))
+    }
+
+    @Test
+    fun testDoubleUnaryMinus() {
+        val input = "--1".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 }

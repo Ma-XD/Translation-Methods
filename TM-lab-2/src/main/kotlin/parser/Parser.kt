@@ -54,7 +54,7 @@ class Parser {
     }
 
     /**
-     * T  -> FT'
+     * T  -> ST'
      */
     private fun parseTerm(): Tree {
         val node = "T"
@@ -62,14 +62,14 @@ class Parser {
             Token.NUMBER,
             Token.LBRACKET,
             Token.FUNCTION,
-            Token.MINUS -> Tree(node, listOf(parseFactor(), parseTermCont()))
+            Token.MINUS -> Tree(node, listOf(parseSign(), parseTermCont()))
 
             else -> throw ParseException("Unexpected start of term: ${lex.curToken.name} at position ${lex.curPos}")
         }
     }
 
     /**
-     * T' -> *FT'
+     * T' -> *ST'
      *
      * T' -> eps
      */
@@ -78,7 +78,7 @@ class Parser {
         return when (lex.curToken) {
             Token.MULTIPLICATION -> {
                 lex.nextToken()
-                Tree(node, listOf(Tree("*"), parseFactor(), parseTermCont()))
+                Tree(node, listOf(Tree("*"), parseSign(), parseTermCont()))
             }
 
             Token.PLUS,
@@ -91,13 +91,32 @@ class Parser {
     }
 
     /**
+     * S  -> -F
+     *
+     * S  -> F
+     */
+    private fun parseSign(): Tree {
+        val node = "S"
+        return when (lex.curToken) {
+            Token.NUMBER,
+            Token.LBRACKET,
+            Token.FUNCTION -> Tree(node, listOf(parseFactor()))
+
+            Token.MINUS -> {
+                lex.nextToken()
+                Tree(node, listOf(Tree("-"), parseFactor()))
+            }
+
+            else -> throw ParseException("Unexpected start of sign: ${lex.curToken.name} at position ${lex.curPos}")
+        }
+    }
+
+    /**
      * F  -> n
      *
      * F  -> (E)
      *
      * F  -> f(E)
-     *
-     * F  -> -F
      */
     private fun parseFactor(): Tree {
         val node = "F"
@@ -115,11 +134,6 @@ class Parser {
                 lex.nextToken()
                 assertToken(Token.LBRACKET, "Unexpected start of factor")
                 parseBracket(first = "f(")
-            }
-
-            Token.MINUS -> {
-                lex.nextToken()
-                listOf(Tree("-"), parseFactor())
             }
 
             else -> throw ParseException("Unexpected start of factor: ${lex.curToken.name} at position ${lex.curPos}")
