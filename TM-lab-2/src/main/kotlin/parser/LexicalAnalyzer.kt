@@ -10,7 +10,7 @@ class LexicalAnalyzer(private var source: InputStream) {
         private set
     var curToken = Token.START
         private set
-    var curTokenLength = 0
+    var curTokenLen = 0
         private set
 
     private companion object {
@@ -41,24 +41,24 @@ class LexicalAnalyzer(private var source: InputStream) {
         skip(Char::isWhitespace)
         curToken = when {
             curChar.isDigit() -> {
-                curTokenLength = skip(Char::isDigit)
+                curTokenLen = skip(Char::isDigit)
                 Token.NUMBER
             }
 
             curChar.isLetter() -> {
-                curTokenLength = skip(Char::isLetter)
+                curTokenLen = skip(Char::isLetter)
                 Token.FUNCTION
             }
 
             OPERATIONS.containsKey(curChar) -> {
                 val token = OPERATIONS[curChar]!!
                 nextChar()
-                curTokenLength = 1
+                curTokenLen = 1
                 token
             }
 
             curChar == END -> {
-                curTokenLength = 0
+                curTokenLen = 0
                 Token.END
             }
 
@@ -67,11 +67,11 @@ class LexicalAnalyzer(private var source: InputStream) {
     }
 
     private fun skip(predicate: (Char) -> Boolean): Int {
-        var length = 0
+        var len = 0
         while (predicate(curChar)) {
             nextChar()
-            length++
+            len++
         }
-        return length
+        return len
     }
 }

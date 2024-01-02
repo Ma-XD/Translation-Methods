@@ -158,5 +158,5 @@ class Parser {
         }
     }
 
-    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curTokenLength}"
+    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curTokenLen}"
 }
