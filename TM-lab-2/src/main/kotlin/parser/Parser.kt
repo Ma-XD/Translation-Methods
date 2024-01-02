@@ -127,13 +127,13 @@ class Parser {
             }
 
             Token.LBRACKET -> {
-                parseBracket(first = "(")
+                parseBracket()
             }
 
             Token.FUNCTION -> {
                 lex.nextToken()
                 assertToken(Token.LBRACKET, "Function must have brackets")
-                parseBracket(first = "f(")
+                parseBracket(arrayListOf(Tree("f")))
             }
 
             else -> throw ParseException("Unacceptable start of factor, ${errorInfo()}")
@@ -142,9 +142,10 @@ class Parser {
         return Tree(node, res)
     }
 
-    private fun parseBracket(first: String): List<Tree> {
+    private fun parseBracket(res: ArrayList<Tree> = arrayListOf()): List<Tree> {
         lex.nextToken()
-        val res = arrayListOf(Tree(first), parseExpr())
+        res.add(Tree("("))
+        res.add(parseExpr())
         assertToken(Token.RBRACKET, "Closing bracket missed")
         res.add(Tree(")"))
         lex.nextToken()
