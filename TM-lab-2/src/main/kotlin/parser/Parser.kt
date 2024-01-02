@@ -10,7 +10,7 @@ class Parser {
         lex = LexicalAnalyzer(input)
         lex.nextToken()
         val res = parseExpr()
-        assertToken(Token.END, "Unexpected end token")
+        assertToken(Token.END, "Unacceptable end token")
         return res
     }
 
@@ -25,7 +25,7 @@ class Parser {
             Token.FUNCTION,
             Token.MINUS -> Tree(node, listOf(parseTerm(), parseExprCont()))
 
-            else -> throw ParseException("Unexpected start of expression: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable start of expression, ${errorInfo()}")
         }
     }
 
@@ -49,7 +49,7 @@ class Parser {
             Token.RBRACKET,
             Token.END -> Tree(node)
 
-            else -> throw ParseException("Unexpected continuation of expression: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable continuation of expression, ${errorInfo()}")
         }
     }
 
@@ -64,7 +64,7 @@ class Parser {
             Token.FUNCTION,
             Token.MINUS -> Tree(node, listOf(parseSign(), parseTermCont()))
 
-            else -> throw ParseException("Unexpected start of term: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable start of term, ${errorInfo()}")
         }
     }
 
@@ -86,7 +86,7 @@ class Parser {
             Token.RBRACKET,
             Token.END -> Tree(node)
 
-            else -> throw ParseException("Unexpected continuation of term: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable continuation of term, ${errorInfo()}")
         }
     }
 
@@ -107,7 +107,7 @@ class Parser {
                 Tree(node, listOf(Tree("-"), parseFactor()))
             }
 
-            else -> throw ParseException("Unexpected start of sign: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable start of sign, ${errorInfo()}")
         }
     }
 
@@ -132,11 +132,11 @@ class Parser {
 
             Token.FUNCTION -> {
                 lex.nextToken()
-                assertToken(Token.LBRACKET, "Unexpected start of factor")
+                assertToken(Token.LBRACKET, "Function must have brackets")
                 parseBracket(first = "f(")
             }
 
-            else -> throw ParseException("Unexpected start of factor: ${lex.curToken.name} at position ${lex.curPos}")
+            else -> throw ParseException("Unacceptable start of factor, ${errorInfo()}")
         }
 
         return Tree(node, res)
@@ -145,7 +145,7 @@ class Parser {
     private fun parseBracket(first: String): List<Tree> {
         lex.nextToken()
         val res = arrayListOf(Tree(first), parseExpr())
-        assertToken(Token.RBRACKET, "Unexpected end of factor")
+        assertToken(Token.RBRACKET, "Closing bracket missed")
         res.add(Tree(")"))
         lex.nextToken()
         return res
@@ -153,7 +153,9 @@ class Parser {
 
     private fun assertToken(expected: Token, message: String) {
         if (lex.curToken != expected) {
-            throw ParseException("$message: ${lex.curToken.name} at position ${lex.curPos}")
+            throw ParseException("$message, ${errorInfo()}")
         }
     }
+
+    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curTokenLength}"
 }
