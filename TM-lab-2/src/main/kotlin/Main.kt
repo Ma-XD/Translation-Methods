@@ -1,16 +1,15 @@
 import parser.Parser
-import parser.Tree
+import java.io.File
 
-fun printTree(tree: Tree) {
-    recursivePrintTree(tree, 0)
-}
+const val PATH = "src/main/resources"
+val INPUT_DIR = File(PATH, "input")
+val OUTPUT_DIR = File(PATH, "output")
 
-fun recursivePrintTree(tree: Tree, deep: Int) {
-    val tabs = "_".repeat(deep)
-    println("$tabs${tree.node}")
-    tree.children.forEach { recursivePrintTree(it, deep + 1) }
-}
+fun main() {
+    val fileName = "example.txt"
+    val inputFile = File(INPUT_DIR, fileName)
+    val outputFile = File(OUTPUT_DIR, inputFile.nameWithoutExtension)
 
-fun main(args: Array<String>) {
-    printTree(Parser().parse("-1".byteInputStream()))
+    val tree = Parser().parse(inputFile.inputStream())
+    TreeVisualizer().visualize(tree, outputFile)
 }
