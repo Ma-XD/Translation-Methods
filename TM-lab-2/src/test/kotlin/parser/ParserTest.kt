@@ -164,18 +164,6 @@ internal class ParserTest {
     }
 
     @Test
-    fun testEmpty() {
-        val input = " ".byteInputStream()
-        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
-    }
-
-    @Test
-    fun testTwoNumbersWithoutOperation() {
-        val input = "2 2".byteInputStream()
-        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
-    }
-
-    @Test
     fun testNumber() {
         val input = "2".byteInputStream()
         val expectedTree = getNumberExpr()
@@ -205,6 +193,27 @@ internal class ParserTest {
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
     }
 
+    @Test
+    fun testFunction() {
+        val input = "f(2)".byteInputStream()
+        val expectedTree = getFunctionExpr(getNumberExpr())
+        val expectedCalculation = f(N)
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testEmpty() {
+        val input = " ".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
+    }
+
+    @Test
+    fun testTwoNumbersWithoutOperation() {
+        val input = "2 2".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
+    }
 
     @Test
     fun testEmptyBrackets() {
@@ -225,18 +234,14 @@ internal class ParserTest {
     }
 
     @Test
-    fun testFunction() {
-        val input = "f(2)".byteInputStream()
-        val expectedTree = getFunctionExpr(getNumberExpr())
-        val expectedCalculation = f(N)
-        val actualTree = parser.parse(input)
-        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
-        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    fun testFunctionWithoutBrackets() {
+        val input = "sin 2 ".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
-    fun testFunctionWithoutBrackets() {
-        val input = "sin 2 ".byteInputStream()
+    fun testEmptyFunction() {
+        val input = "sin()".byteInputStream()
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
@@ -281,7 +286,7 @@ internal class ParserTest {
     }
 
     @Test
-    fun testOllyUnaryMinus() {
+    fun testUnaryMinusWithoutFactor() {
         val input = "-".byteInputStream()
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
@@ -328,19 +333,6 @@ internal class ParserTest {
     }
 
     @Test
-    fun testIllegalTokenAfterMultiply() {
-        val input = listOf(
-            "2 *",
-            "2 ** 2",
-            "2 *+ 2",
-            "(2 *)"
-        ).map { it.byteInputStream() }
-        input.forEach {
-            Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
-        }
-    }
-
-    @Test
     fun testMultiplyAndUnaryMinus() {
         val input = "2*-2".byteInputStream()
         val expectedTree = getExpr(
@@ -354,6 +346,19 @@ internal class ParserTest {
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testIllegalTokenAfterMultiply() {
+        val input = listOf(
+            "2 *",
+            "2 ** 2",
+            "2 *+ 2",
+            "(2 *)"
+        ).map { it.byteInputStream() }
+        input.forEach {
+            Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
+        }
     }
 
     @Test
@@ -531,7 +536,6 @@ internal class ParserTest {
     @Test
     fun testIllegalTokenAfterAddOrSubtract() {
         val input = listOf(
-            "+ 2",
             "2 +",
             "3 -",
             "2 ++ 2",
@@ -545,4 +549,48 @@ internal class ParserTest {
             Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
         }
     }
+
+    @Test
+    fun testFromExample() {
+        val input = "(1+2)*sin(-3*(7-4)+2)".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getBracket(
+                getExpr(
+                    factor = getNumber(),
+                    exprCont = getExprCont(
+                        op="+",
+                        term = getTerm(getNumber())
+                    )
+                )
+            ),
+            termCont = getTermCont(
+                factor = getFunction(
+                    getExpr(
+                        factor = getNumber(),
+                        sign = ::getUnaryMinus,
+                        termCont = getTermCont(
+                            factor = getBracket(
+                                getExpr(
+                                    factor = getNumber(),
+                                    exprCont = getExprCont(
+                                        op = "-",
+                                        term = getTerm(getNumber())
+                                    )
+                                )
+                            )
+                        ),
+                        exprCont = getExprCont(
+                            op = "+",
+                            term = getTerm(getNumber())
+                        )
+                    )
+                )
+            )
+        )
+        val expectedCalculation = (N + N) * f(-N * (N - N) + N)
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
 }
