@@ -176,9 +176,9 @@ internal class ParserTest {
 
     @Test
     fun testNumber() {
-        val input = "2".byteInputStream()
-        val expectedTree = getNumberExpr(2)
-        val expectedCalculation = 2
+        val input = "1234567890".byteInputStream()
+        val expectedTree = getNumberExpr(1234567890)
+        val expectedCalculation = 1234567890
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -188,7 +188,7 @@ internal class ParserTest {
     fun testBrackets() {
         val input = "(2)".byteInputStream()
         val expectedTree = getBracketExpr(getNumberExpr(2))
-        val expectedCalculation = 2
+        val expectedCalculation = (2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -198,7 +198,7 @@ internal class ParserTest {
     fun testDoubleBrackets() {
         val input = "((2))".byteInputStream()
         val expectedTree = getBracketExpr(getBracketExpr(getNumberExpr(2)))
-        val expectedCalculation = 2
+        val expectedCalculation = ((2))
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -548,7 +548,7 @@ internal class ParserTest {
     fun testIllegalTokenAfterAddOrSubtract() {
         val input = listOf(
             "2 +",
-            "3 -",
+            "2 -",
             "2 ++ 2",
             "2 -+ 2",
             "2 +* 2",
