@@ -11,12 +11,14 @@ internal class ParserTest {
     private companion object {
         const val BUILDING_MESSAGE = "Test tree building"
         const val CALCULATION_MESSAGE = "Test calculation"
-        const val N = 2 // default number for calculations
         fun f(x: Int) = x * x // default function for calculations
 
         fun calc(tree: Tree): Int = when (tree.node) {
             "n" -> {
-                N
+                tree.children
+                    .first()
+                    .node
+                    .toInt()
             }
 
             "F" -> {
@@ -118,9 +120,14 @@ internal class ParserTest {
             )
         )
 
-        private fun getNumber() = Tree(
+        private fun getNumber(n: Int) = Tree(
             "F", listOf(
-                Tree("n")
+                Tree(
+                    "n",
+                    listOf(
+                        Tree(n.toString())
+                    )
+                )
             )
         )
 
@@ -132,9 +139,13 @@ internal class ParserTest {
             )
         )
 
-        private fun getFunction(expr: Tree) = Tree(
+        private fun getFunction(f: String, expr: Tree) = Tree(
             "F", listOf(
-                Tree("f"),
+                Tree(
+                    "f", listOf(
+                        Tree(f)
+                    )
+                ),
                 Tree("("),
                 expr,
                 Tree(")")
@@ -154,11 +165,11 @@ internal class ParserTest {
             )
         )
 
-        fun getNumberExpr() = getExpr(getNumber())
+        fun getNumberExpr(n: Int) = getExpr(getNumber(n))
 
         fun getBracketExpr(expr: Tree) = getExpr(getBracket(expr))
 
-        fun getFunctionExpr(expr: Tree) = getExpr(getFunction(expr))
+        fun getFunctionExpr(f: String, expr: Tree) = getExpr(getFunction(f, expr))
 
         fun getUnaryMinusExpr(factor: Tree) = getExpr(factor = factor, sign = ::getUnaryMinus)
     }
@@ -166,8 +177,8 @@ internal class ParserTest {
     @Test
     fun testNumber() {
         val input = "2".byteInputStream()
-        val expectedTree = getNumberExpr()
-        val expectedCalculation = N
+        val expectedTree = getNumberExpr(2)
+        val expectedCalculation = 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -176,8 +187,8 @@ internal class ParserTest {
     @Test
     fun testBrackets() {
         val input = "(2)".byteInputStream()
-        val expectedTree = getBracketExpr(getNumberExpr())
-        val expectedCalculation = N
+        val expectedTree = getBracketExpr(getNumberExpr(2))
+        val expectedCalculation = 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -186,8 +197,8 @@ internal class ParserTest {
     @Test
     fun testDoubleBrackets() {
         val input = "((2))".byteInputStream()
-        val expectedTree = getBracketExpr(getBracketExpr(getNumberExpr()))
-        val expectedCalculation = N
+        val expectedTree = getBracketExpr(getBracketExpr(getNumberExpr(2)))
+        val expectedCalculation = 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -196,8 +207,8 @@ internal class ParserTest {
     @Test
     fun testFunction() {
         val input = "f(2)".byteInputStream()
-        val expectedTree = getFunctionExpr(getNumberExpr())
-        val expectedCalculation = f(N)
+        val expectedTree = getFunctionExpr("f", getNumberExpr(2))
+        val expectedCalculation = f(2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -248,8 +259,8 @@ internal class ParserTest {
     @Test
     fun testUnaryMinus() {
         val input = "-2".byteInputStream()
-        val expectedTree = getUnaryMinusExpr(getNumber())
-        val expectedCalculation = -N
+        val expectedTree = getUnaryMinusExpr(getNumber(2))
+        val expectedCalculation = -2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -260,10 +271,10 @@ internal class ParserTest {
         val input = "-(-2)".byteInputStream()
         val expectedTree = getUnaryMinusExpr(
             getBracket(
-                getUnaryMinusExpr(getNumber())
+                getUnaryMinusExpr(getNumber(2))
             )
         )
-        val expectedCalculation = -(-N)
+        val expectedCalculation = -(-2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -272,8 +283,8 @@ internal class ParserTest {
     @Test
     fun testUnaryMinusAndFunction() {
         val input = "-f(2)".byteInputStream()
-        val expectedTree = getUnaryMinusExpr(getFunction(getNumberExpr()))
-        val expectedCalculation = -f(N)
+        val expectedTree = getUnaryMinusExpr(getFunction("f", getNumberExpr(2)))
+        val expectedCalculation = -f(2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -307,10 +318,10 @@ internal class ParserTest {
     fun testMultiply() {
         val input = "2 * 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
-            termCont = getTermCont(getNumber())
+            factor = getNumber(2),
+            termCont = getTermCont(getNumber(2))
         )
-        val expectedCalculation = N * N
+        val expectedCalculation = 2 * 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -320,13 +331,13 @@ internal class ParserTest {
     fun testDoubleMultiply() {
         val input = "2 * 2 * 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             termCont = getTermCont(
-                factor = getNumber(),
-                termCont = getTermCont(getNumber())
+                factor = getNumber(2),
+                termCont = getTermCont(getNumber(2))
             )
         )
-        val expectedCalculation = N * N * N
+        val expectedCalculation = 2 * 2 * 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -336,13 +347,13 @@ internal class ParserTest {
     fun testMultiplyAndUnaryMinus() {
         val input = "2*-2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             termCont = getTermCont(
-                factor = getNumber(),
+                factor = getNumber(2),
                 sign = ::getUnaryMinus
             )
         )
-        val expectedCalculation = N * -N
+        val expectedCalculation = 2 * -2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -365,13 +376,13 @@ internal class ParserTest {
     fun testAdd() {
         val input = "2 + 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "+",
-                term = getTerm(getNumber())
+                term = getTerm(getNumber(2))
             )
         )
-        val expectedCalculation = N + N
+        val expectedCalculation = 2 + 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -381,13 +392,13 @@ internal class ParserTest {
     fun testSubtract() {
         val input = "2 - 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "-",
-                term = getTerm(getNumber())
+                term = getTerm(getNumber(2))
             )
         )
-        val expectedCalculation = N - N
+        val expectedCalculation = 2 - 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -397,17 +408,17 @@ internal class ParserTest {
     fun testDoubleAdd() {
         val input = "2 + 2 + 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "+",
-                term = getTerm(getNumber()),
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
                     op = "+",
-                    term = getTerm(getNumber()),
+                    term = getTerm(getNumber(2)),
                 )
             )
         )
-        val expectedCalculation = N + N + N
+        val expectedCalculation = 2 + 2 + 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -417,17 +428,17 @@ internal class ParserTest {
     fun testDoubleSubtract() {
         val input = "2 - 2 - 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "-",
-                term = getTerm(getNumber()),
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
                     op = "-",
-                    term = getTerm(getNumber()),
+                    term = getTerm(getNumber(2)),
                 )
             )
         )
-        val expectedCalculation = N - N - N
+        val expectedCalculation = 2 - 2 - 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -437,17 +448,17 @@ internal class ParserTest {
     fun testSubtractAndAdd() {
         val input = "2 - 2 + 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "-",
-                term = getTerm(getNumber()),
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
                     op = "+",
-                    term = getTerm(getNumber()),
+                    term = getTerm(getNumber(2)),
                 )
             )
         )
-        val expectedCalculation = N - N + N
+        val expectedCalculation = 2 - 2 + 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -457,16 +468,16 @@ internal class ParserTest {
     fun testSubtractAndUnaryMinus() {
         val input = "2--2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "-",
                 term = getTerm(
-                    factor = getNumber(),
+                    factor = getNumber(2),
                     sign = ::getUnaryMinus
                 )
             )
         )
-        val expectedCalculation = N - -N
+        val expectedCalculation = 2 - -2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -476,16 +487,16 @@ internal class ParserTest {
     fun testAddAndMultiplyPriority() {
         val input = "2 + 2 * 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             exprCont = getExprCont(
                 op = "+",
                 term = getTerm(
-                    factor = getNumber(),
-                    termCont = getTermCont(getNumber())
+                    factor = getNumber(2),
+                    termCont = getTermCont(getNumber(2))
                 )
             )
         )
-        val expectedCalculation = N + N * N
+        val expectedCalculation = 2 + 2 * 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -497,18 +508,18 @@ internal class ParserTest {
         val expectedTree = getExpr(
             factor = getBracket(
                 getExpr(
-                    factor = getNumber(),
+                    factor = getNumber(2),
                     exprCont = getExprCont(
                         op = "+",
                         term = getTerm(
-                            factor = getNumber()
+                            factor = getNumber(2)
                         )
                     )
                 )
             ),
-            termCont = getTermCont(getNumber())
+            termCont = getTermCont(getNumber(2))
         )
-        val expectedCalculation = (N + N) * N
+        val expectedCalculation = (2 + 2) * 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -518,16 +529,16 @@ internal class ParserTest {
     fun testMultiplyAndAddPriority() {
         val input = "2 * 2 + 2".byteInputStream()
         val expectedTree = getExpr(
-            factor = getNumber(),
+            factor = getNumber(2),
             termCont = getTermCont(
-                factor = getNumber()
+                factor = getNumber(2)
             ),
             exprCont = getExprCont(
                 op = "+",
-                term = getTerm(getNumber())
+                term = getTerm(getNumber(2))
             )
         )
-        val expectedCalculation = N * N + N
+        val expectedCalculation = 2 * 2 + 2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
@@ -556,38 +567,40 @@ internal class ParserTest {
         val expectedTree = getExpr(
             factor = getBracket(
                 getExpr(
-                    factor = getNumber(),
+                    factor = getNumber(1),
                     exprCont = getExprCont(
-                        op="+",
-                        term = getTerm(getNumber())
+                        op = "+",
+                        term = getTerm(getNumber(2))
                     )
                 )
             ),
             termCont = getTermCont(
                 factor = getFunction(
+                    f = "sin",
                     getExpr(
-                        factor = getNumber(),
+                        factor = getNumber(3),
                         sign = ::getUnaryMinus,
                         termCont = getTermCont(
                             factor = getBracket(
                                 getExpr(
-                                    factor = getNumber(),
+                                    factor = getNumber(7),
                                     exprCont = getExprCont(
                                         op = "-",
-                                        term = getTerm(getNumber())
+                                        term = getTerm(getNumber(4))
                                     )
                                 )
                             )
                         ),
                         exprCont = getExprCont(
                             op = "+",
-                            term = getTerm(getNumber())
+                            term = getTerm(getNumber(2))
                         )
                     )
                 )
             )
         )
-        val expectedCalculation = (N + N) * f(-N * (N - N) + N)
+        // in calculation sin is changed to default function
+        val expectedCalculation = (1 + 2) * f(-3 * (7 - 4) + 2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)

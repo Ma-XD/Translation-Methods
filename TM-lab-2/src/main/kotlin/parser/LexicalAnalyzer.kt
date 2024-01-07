@@ -3,6 +3,7 @@ package parser
 import parser.exception.LexicalException
 import java.io.IOException
 import java.io.InputStream
+import java.lang.StringBuilder
 
 class LexicalAnalyzer(private var source: InputStream) {
     private var curChar = '\u0000'
@@ -10,7 +11,7 @@ class LexicalAnalyzer(private var source: InputStream) {
         private set
     var curToken = Token.START
         private set
-    var curTokenLen = 0
+    var curString: String = ""
         private set
 
     private companion object {
@@ -38,27 +39,27 @@ class LexicalAnalyzer(private var source: InputStream) {
     }
 
     fun nextToken() {
-        skip(Char::isWhitespace)
+        readWhile(Char::isWhitespace)
         curToken = when {
             curChar.isDigit() -> {
-                curTokenLen = skip(Char::isDigit)
+                curString = readWhile(Char::isDigit)
                 Token.NUMBER
             }
 
             curChar.isLetter() -> {
-                curTokenLen = skip(Char::isLetter)
+                curString = readWhile(Char::isLetter)
                 Token.FUNCTION
             }
 
             OPERATIONS.containsKey(curChar) -> {
                 val token = OPERATIONS[curChar]!!
+                curString = curChar.toString()
                 nextChar()
-                curTokenLen = 1
                 token
             }
 
             curChar == END -> {
-                curTokenLen = 0
+                curString = ""
                 Token.END
             }
 
@@ -66,12 +67,12 @@ class LexicalAnalyzer(private var source: InputStream) {
         }
     }
 
-    private fun skip(predicate: (Char) -> Boolean): Int {
-        var len = 0
+    private fun readWhile(predicate: (Char) -> Boolean): String {
+        val buffer = StringBuilder()
         while (predicate(curChar)) {
+            buffer.append(curChar)
             nextChar()
-            len++
         }
-        return len
+        return buffer.toString()
     }
 }

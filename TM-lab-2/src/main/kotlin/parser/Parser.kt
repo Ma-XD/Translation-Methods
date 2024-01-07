@@ -122,8 +122,9 @@ class Parser {
         val node = "F"
         val res: List<Tree> = when (lex.curToken) {
             Token.NUMBER -> {
+                val value = Tree(lex.curString)
                 lex.nextToken()
-                listOf(Tree("n"))
+                listOf(Tree("n", listOf(value)))
             }
 
             Token.LBRACKET -> {
@@ -131,9 +132,10 @@ class Parser {
             }
 
             Token.FUNCTION -> {
+                val value = Tree(lex.curString)
                 lex.nextToken()
                 assertToken(Token.LBRACKET, "Function must have brackets")
-                parseBracket(arrayListOf(Tree("f")))
+                parseBracket(arrayListOf(Tree("f", listOf(value))))
             }
 
             else -> throw ParseException("Unacceptable start of factor, ${errorInfo()}")
@@ -158,5 +160,5 @@ class Parser {
         }
     }
 
-    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curTokenLen}"
+    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curString.length}"
 }
