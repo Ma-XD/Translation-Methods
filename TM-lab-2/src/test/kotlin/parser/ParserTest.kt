@@ -170,6 +170,12 @@ internal class ParserTest {
     }
 
     @Test
+    fun testTwoNumbersWithoutOperation() {
+        val input = "2 2".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
+    }
+
+    @Test
     fun testNumber() {
         val input = "2".byteInputStream()
         val expectedTree = getNumberExpr()
@@ -188,6 +194,17 @@ internal class ParserTest {
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
     }
+
+    @Test
+    fun testDoubleBrackets() {
+        val input = "((2))".byteInputStream()
+        val expectedTree = getBracketExpr(getBracketExpr(getNumberExpr()))
+        val expectedCalculation = N
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
 
     @Test
     fun testEmptyBrackets() {
@@ -234,6 +251,20 @@ internal class ParserTest {
     }
 
     @Test
+    fun testDoubleUnaryMinusWithBrackets() {
+        val input = "-(-2)".byteInputStream()
+        val expectedTree = getUnaryMinusExpr(
+            getBracket(
+                getUnaryMinusExpr(getNumber())
+            )
+        )
+        val expectedCalculation = -(-N)
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
     fun testUnaryMinusAndFunction() {
         val input = "-f(2)".byteInputStream()
         val expectedTree = getUnaryMinusExpr(getFunction(getNumberExpr()))
@@ -246,6 +277,12 @@ internal class ParserTest {
     @Test
     fun testDoubleUnaryMinus() {
         val input = "--2".byteInputStream()
+        Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
+    }
+
+    @Test
+    fun testOllyUnaryMinus() {
+        val input = "-".byteInputStream()
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
@@ -295,6 +332,7 @@ internal class ParserTest {
         val input = listOf(
             "2 *",
             "2 ** 2",
+            "2 *+ 2",
             "(2 *)"
         ).map { it.byteInputStream() }
         input.forEach {
@@ -391,6 +429,26 @@ internal class ParserTest {
     }
 
     @Test
+    fun testSubtractAndAdd() {
+        val input = "2 - 2 + 2".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getNumber(),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(getNumber()),
+                exprCont = getExprCont(
+                    op = "+",
+                    term = getTerm(getNumber()),
+                )
+            )
+        )
+        val expectedCalculation = N - N + N
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
     fun testSubtractAndUnaryMinus() {
         val input = "2--2".byteInputStream()
         val expectedTree = getExpr(
@@ -407,5 +465,84 @@ internal class ParserTest {
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testAddAndMultiplyPriority() {
+        val input = "2 + 2 * 2".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getNumber(),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(
+                    factor = getNumber(),
+                    termCont = getTermCont(getNumber())
+                )
+            )
+        )
+        val expectedCalculation = N + N * N
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testAddAndMultiplyWithBracketsPriority() {
+        val input = "(2 + 2) * 2".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getBracket(
+                getExpr(
+                    factor = getNumber(),
+                    exprCont = getExprCont(
+                        op = "+",
+                        term = getTerm(
+                            factor = getNumber()
+                        )
+                    )
+                )
+            ),
+            termCont = getTermCont(getNumber())
+        )
+        val expectedCalculation = (N + N) * N
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testMultiplyAndAddPriority() {
+        val input = "2 * 2 + 2".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getNumber(),
+            termCont = getTermCont(
+                factor = getNumber()
+            ),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(getNumber())
+            )
+        )
+        val expectedCalculation = N * N + N
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
+    fun testIllegalTokenAfterAddOrSubtract() {
+        val input = listOf(
+            "+ 2",
+            "2 +",
+            "3 -",
+            "2 ++ 2",
+            "2 -+ 2",
+            "2 +* 2",
+            "2 -* 2",
+            "(2 +)",
+            "(2 -)",
+        ).map { it.byteInputStream() }
+        input.forEach {
+            Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
+        }
     }
 }
