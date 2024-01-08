@@ -11,5 +11,5 @@ fun main() {
     val outputFile = File(OUTPUT_DIR, inputFile.nameWithoutExtension)
 
     val tree = Parser().parse(inputFile.inputStream())
-    TreeVisualizer().visualize(tree, outputFile)
+    TreeVisualizer(tree).visualize(outputFile)
 }
