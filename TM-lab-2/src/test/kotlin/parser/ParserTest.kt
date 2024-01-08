@@ -545,6 +545,33 @@ internal class ParserTest {
     }
 
     @Test
+    fun testManyOperationsPriority() {
+        val input = "6 * 5 - 4 * 3 - 2 * 2".byteInputStream()
+        val expectedTree = getExpr(
+            factor = getNumber(6),
+            termCont = getTermCont(getNumber(5)),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(
+                    factor = getNumber(4),
+                    termCont = getTermCont(getNumber(3))
+                ),
+                exprCont = getExprCont(
+                    op = "-",
+                    term = getTerm(
+                        factor = getNumber(2),
+                        termCont = getTermCont(getNumber(2))
+                    )
+                )
+            )
+        )
+        val expectedCalculation = 6 * 5 - 4 * 3 - 2 * 2
+        val actualTree = parser.parse(input)
+        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+    }
+
+    @Test
     fun testIllegalTokenAfterAddOrSubtract() {
         val input = listOf(
             "2 +",

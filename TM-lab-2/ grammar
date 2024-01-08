@@ -11,6 +11,14 @@ F -> f(E)
 F -> (E)
 F -> n
 
+где:
+
+E - expression
+T - term
+S - sign
+F - factor
+*' - continuation of *
+
 Устраним левую рекурсию:
 
 E  -> TE'
