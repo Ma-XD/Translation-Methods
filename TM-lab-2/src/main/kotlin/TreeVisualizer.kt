@@ -13,20 +13,20 @@ class TreeVisualizer {
 
     fun visualize(tree: Tree, file: File) {
         val graph = Factory.mutGraph()
-        buildGraphFromTree(graph, tree, UID.getUID())
+        buildGraphFromTree(graph, parent = tree, parentId = UID.getUID())
         graph.toGraphviz().render(Format.SVG).toFile(file)
     }
 
     private fun buildGraphFromTree(graph: MutableGraph, parent: Tree, parentId: String) {
-        if (parent.node == "n" || parent.node == "f") return
+        if (parent.value == "n" || parent.value == "f") return
 
         val parentNode = Factory.mutNode(parentId)
-        parentNode.setLabel(parent.node)
+        parentNode.setLabel(parent.value)
 
         parent.children.forEach { child ->
             val childId = UID.getUID()
             val childNode = Factory.mutNode(childId)
-            childNode.setLabel(child.node)
+            childNode.setLabel(child.value)
             graph.add(parentNode.addLink(childNode))
 
             buildGraphFromTree(graph, child, childId)

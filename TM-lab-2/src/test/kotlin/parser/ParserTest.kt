@@ -13,27 +13,27 @@ internal class ParserTest {
         const val CALCULATION_MESSAGE = "Test calculation"
         fun f(x: Int) = x * x // default function for calculations
 
-        fun calc(tree: Tree): Int = when (tree.node) {
+        fun calc(tree: Tree): Int = when (tree.value) {
             "n" -> {
                 tree.children
                     .first()
-                    .node
+                    .value
                     .toInt()
             }
 
             "F" -> {
                 var i = 0
                 var f: (Int) -> Int = { it }
-                if (tree.children[i].node == "f") {
+                if (tree.children[i].value == "f") {
                     i++
                     f = ::f
                 }
-                if (tree.children[i].node == "(") i++
+                if (tree.children[i].value == "(") i++
                 f(calc(tree.children[i]))
             }
 
             "S" -> {
-                if (tree.children[0].node == "-") {
+                if (tree.children[0].value == "-") {
                     -calc(tree.children[1])
                 } else {
                     calc(tree.children[0])
@@ -54,7 +54,7 @@ internal class ParserTest {
                 var res = calc(tree.children[0])
                 var next = tree.children[1] // E'
                 while (next.children.isNotEmpty()) {
-                    val op = next.children[0].node
+                    val op = next.children[0].value
                     res += if (op == "+") calc(next.children[1]) else -calc(next.children[1])
                     next = next.children[2] // E'
                 }
