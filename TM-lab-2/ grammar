@@ -17,7 +17,7 @@ E - expression
 T - term
 S - sign
 F - factor
-*' - continuation of *
+E', T' - continuation of E and T
 
 Устраним левую рекурсию:
 

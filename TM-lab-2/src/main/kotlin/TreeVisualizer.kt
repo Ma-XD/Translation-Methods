@@ -22,12 +22,12 @@ class TreeVisualizer(tree: Tree) {
     }
 
     private fun buildGraphFromTree(parent: Tree, parentId: String) {
-        if (parent.value == "n" || parent.value == "f") return
+        if (parent.node == "n" || parent.node == "f") return
 
         val parentNode = Factory.mutNode(parentId)
-        parentNode.setLabel(parent.value)
+        parentNode.setLabel(parent.node)
 
-        if ((parent.value == "E'" || parent.value == "T'")
+        if ((parent.node == "E'" || parent.node == "T'")
             && parent.children.isEmpty()
         ) {
             val epsNode = Factory.mutNode(IdFactory.getId())
@@ -39,7 +39,7 @@ class TreeVisualizer(tree: Tree) {
         parent.children.forEach { child ->
             val childId = IdFactory.getId()
             val childNode = Factory.mutNode(childId)
-            childNode.setLabel(child.value)
+            childNode.setLabel(child.node)
             graph.add(parentNode.addLink(childNode))
 
             buildGraphFromTree(child, childId)
