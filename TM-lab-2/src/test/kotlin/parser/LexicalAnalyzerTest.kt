@@ -49,18 +49,17 @@ internal class LexicalAnalyzerTest {
     @Test
     fun testSplit() {
         val lex = LexicalAnalyzer("sin 123\ncos456".byteInputStream())
-        lex.nextToken()
-        Assertions.assertEquals(Token.FUNCTION, lex.curToken)
-        Assertions.assertEquals("sin", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.NUMBER, lex.curToken)
-        Assertions.assertEquals("123", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.FUNCTION, lex.curToken)
-        Assertions.assertEquals("cos", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.NUMBER, lex.curToken)
-        Assertions.assertEquals("456", lex.curString)
+        val expected = listOf(
+            Token.FUNCTION to "sin",
+            Token.NUMBER to "123",
+            Token.FUNCTION to "cos",
+            Token.NUMBER to "456",
+        )
+        expected.forEach {
+            lex.nextToken()
+            Assertions.assertEquals(it.first, lex.curToken)
+            Assertions.assertEquals(it.second, lex.curString)
+        }
         lex.nextToken()
         Assertions.assertEquals(Token.END, lex.curToken)
     }
@@ -68,21 +67,18 @@ internal class LexicalAnalyzerTest {
     @Test
     fun testOperation() {
         val lex = LexicalAnalyzer("+-*()".byteInputStream())
-        lex.nextToken()
-        Assertions.assertEquals(Token.PLUS, lex.curToken)
-        Assertions.assertEquals("+", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.MINUS, lex.curToken)
-        Assertions.assertEquals("-", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.MULTIPLICATION, lex.curToken)
-        Assertions.assertEquals("*", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.LBRACKET, lex.curToken)
-        Assertions.assertEquals("(", lex.curString)
-        lex.nextToken()
-        Assertions.assertEquals(Token.RBRACKET, lex.curToken)
-        Assertions.assertEquals(")", lex.curString)
+        val expected = listOf(
+            Token.PLUS to "+",
+            Token.MINUS to "-",
+            Token.MULTIPLICATION to "*",
+            Token.LBRACKET to "(",
+            Token.RBRACKET to ")",
+        )
+        expected.forEach {
+            lex.nextToken()
+            Assertions.assertEquals(it.first, lex.curToken)
+            Assertions.assertEquals(it.second, lex.curString)
+        }
         lex.nextToken()
         Assertions.assertEquals(Token.END, lex.curToken)
     }
