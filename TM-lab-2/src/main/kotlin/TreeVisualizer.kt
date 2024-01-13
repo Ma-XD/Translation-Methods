@@ -27,8 +27,7 @@ class TreeVisualizer(tree: Tree) {
         val parentNode = Factory.mutNode(parentId)
         parentNode.setLabel(parent.node)
 
-        if ((parent.node == "E'" || parent.node == "T'")
-            && parent.children.isEmpty()
+        if (parent.node.endsWith('\'') && parent.children.isEmpty()
         ) {
             val epsNode = Factory.mutNode(IdFactory.getId())
             epsNode.setLabel("eps")

@@ -65,9 +65,11 @@ internal class LexicalAnalyzerTest {
     }
 
     @Test
-    fun testOperation() {
-        val lex = LexicalAnalyzer("+-*()".byteInputStream())
+    fun testOperations() {
+        val lex = LexicalAnalyzer("?:+-*()".byteInputStream())
         val expected = listOf(
+            Token.IF to "?",
+            Token.ELSE to ":",
             Token.PLUS to "+",
             Token.MINUS to "-",
             Token.MULTIPLICATION to "*",
@@ -81,6 +83,30 @@ internal class LexicalAnalyzerTest {
         }
         lex.nextToken()
         Assertions.assertEquals(Token.END, lex.curToken)
+    }
+
+    @Test
+    fun testComparisons() {
+        val lex = LexicalAnalyzer("==!=<>".byteInputStream())
+        val expected = listOf(
+            Token.EQUAL to "==",
+            Token.NOT_EQUAL to "!=",
+            Token.LESS to "<",
+            Token.GREATER to ">",
+        )
+        expected.forEach {
+            lex.nextToken()
+            Assertions.assertEquals(it.first, lex.curToken)
+            Assertions.assertEquals(it.second, lex.curString)
+        }
+        lex.nextToken()
+        Assertions.assertEquals(Token.END, lex.curToken)
+    }
+
+    @Test
+    fun testEqualWithoutSecondChar() {
+        val lex = LexicalAnalyzer("=1".byteInputStream())
+        Assertions.assertThrows(LexicalException::class.java, lex::nextToken)
     }
 
     @Test

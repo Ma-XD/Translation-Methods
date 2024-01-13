@@ -6,7 +6,7 @@ val INPUT_DIR = File(PATH, "input")
 val OUTPUT_DIR = File(PATH, "output")
 
 fun main() {
-    val fileName = "example.txt"
+    val fileName = "condition.txt"
     val inputFile = File(INPUT_DIR, fileName)
     val outputFile = File(OUTPUT_DIR, inputFile.nameWithoutExtension)
 

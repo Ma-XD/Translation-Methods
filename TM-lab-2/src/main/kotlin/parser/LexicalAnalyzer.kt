@@ -17,11 +17,19 @@ class LexicalAnalyzer(private var source: InputStream) {
     private companion object {
         private const val END: Char = (-1).toChar()
         private val OPERATIONS: Map<Char, Token> = mapOf(
+            '?' to Token.IF,
+            ':' to Token.ELSE,
             '+' to Token.PLUS,
             '-' to Token.MINUS,
             '*' to Token.MULTIPLICATION,
             '(' to Token.LBRACKET,
             ')' to Token.RBRACKET,
+        )
+        private val COMPARISONS: Map<Char, Token> = mapOf(
+            '=' to Token.EQUAL,
+            '!' to Token.NOT_EQUAL,
+            '>' to Token.GREATER,
+            '<' to Token.LESS,
         )
     }
 
@@ -55,6 +63,21 @@ class LexicalAnalyzer(private var source: InputStream) {
                 val token = OPERATIONS[curChar]!!
                 curString = curChar.toString()
                 nextChar()
+                token
+            }
+
+            COMPARISONS.containsKey(curChar) -> {
+                val token = COMPARISONS[curChar]!!
+                curString = curChar.toString()
+                nextChar()
+                if (token == Token.EQUAL || token == Token.NOT_EQUAL) {
+                    if (curChar == '=') {
+                        curString += "="
+                        nextChar()
+                    } else {
+                        throw LexicalException("Illegal character '$curChar' at position $curPos, expected '='")
+                    }
+                }
                 token
             }
 

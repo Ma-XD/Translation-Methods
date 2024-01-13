@@ -9,9 +9,49 @@ class Parser {
     fun parse(input: InputStream): Tree {
         lex = LexicalAnalyzer(input)
         lex.nextToken()
-        val res = parseExpr()
+        val res = parseCond()
         assertToken(Token.END, "Unacceptable end token")
         return res
+    }
+
+    private fun parseCond(): Tree {
+        val node = "C"
+        return when (lex.curToken) {
+            Token.NUMBER,
+            Token.LBRACKET,
+            Token.FUNCTION,
+            Token.MINUS -> {
+                Tree(node, listOf(parseExpr(), parseCondCont()))
+            }
+
+            else -> throw ParseException("Unacceptable start of condition.txt, ${errorInfo()}")
+        }
+    }
+
+    private fun parseCondCont(): Tree {
+        val node = "C'"
+        return when (lex.curToken) {
+            Token.EQUAL,
+            Token.NOT_EQUAL,
+            Token.GREATER,
+            Token.LESS -> {
+                val cmp = lex.curString
+                lex.nextToken()
+                val condExpr = parseExpr()
+                assertToken(Token.IF, "Unacceptable continuation of condition.txt, expected token ${Token.IF}")
+                lex.nextToken()
+                val ifExpr = parseExpr()
+                assertToken(Token.ELSE, "Unacceptable continuation of condition.txt, expected token ${Token.ELSE}")
+                lex.nextToken()
+                val elseExpr = parseExpr()
+                Tree(node, listOf(Tree(cmp), condExpr, Tree("?"), ifExpr, Tree(":"), elseExpr))
+            }
+
+            Token.RBRACKET,
+            Token.END -> Tree(node)
+
+            else -> throw ParseException("Unacceptable continuation of condition.txt, ${errorInfo()}")
+        }
     }
 
     /**
@@ -41,11 +81,17 @@ class Parser {
         return when (lex.curToken) {
             Token.PLUS,
             Token.MINUS -> {
-                val op = if (lex.curToken == Token.PLUS) "+" else "-"
+                val op = lex.curString
                 lex.nextToken()
                 Tree(node, listOf(Tree(op), parseTerm(), parseExprCont()))
             }
 
+            Token.EQUAL,
+            Token.NOT_EQUAL,
+            Token.GREATER,
+            Token.LESS,
+            Token.IF,
+            Token.ELSE,
             Token.RBRACKET,
             Token.END -> Tree(node)
 
@@ -81,6 +127,12 @@ class Parser {
                 Tree(node, listOf(Tree("*"), parseSign(), parseTermCont()))
             }
 
+            Token.EQUAL,
+            Token.NOT_EQUAL,
+            Token.GREATER,
+            Token.LESS,
+            Token.IF,
+            Token.ELSE,
             Token.PLUS,
             Token.MINUS,
             Token.RBRACKET,
@@ -147,7 +199,7 @@ class Parser {
     private fun parseBracket(res: ArrayList<Tree> = arrayListOf()): List<Tree> {
         lex.nextToken()
         res.add(Tree("("))
-        res.add(parseExpr())
+        res.add(parseCond())
         assertToken(Token.RBRACKET, "Closing bracket missed")
         res.add(Tree(")"))
         lex.nextToken()
