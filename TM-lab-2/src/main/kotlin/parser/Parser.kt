@@ -14,6 +14,9 @@ class Parser {
         return res
     }
 
+    /**
+     * C  -> EC'
+     */
     private fun parseCond(): Tree {
         val node = "C"
         return when (lex.curToken) {
@@ -28,6 +31,11 @@ class Parser {
         }
     }
 
+    /**
+     * C' -> pE?E:E
+     *
+     * C' -> eps
+     */
     private fun parseCondCont(): Tree {
         val node = "C'"
         return when (lex.curToken) {
