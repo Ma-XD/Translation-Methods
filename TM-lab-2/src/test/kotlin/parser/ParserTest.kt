@@ -741,27 +741,96 @@ internal class ParserTest {
     }
 
     @Test
-    fun testSimpleCondition() {
-        val input = "2 + 2 == 4 ? 1 : 0".byteInputStream()
+    fun testCompare() {
+        listOf(
+            Triple("1 == 2 ? 1 : 0", "==", 0),
+            Triple("1 != 2 ? 1 : 0", "!=", 1),
+            Triple("1 > 2 ? 1 : 0", ">", 0),
+            Triple("1 < 2 ? 1 : 0", "<", 1),
+        ).forEach { args ->
+            val expectedTree = getCond(
+                expr = getNumberExpr(1),
+                condCont = getCondCount(
+                    cmp = args.second,
+                    condExpr = getNumberExpr(2),
+                    ifExpr = getNumberExpr(1),
+                    elseExpr = getNumberExpr(0),
+                )
+            )
+            val expectedCalculation = args.third
+            val actualTree = parser.parse(args.first.byteInputStream())
+            Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
+            Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
+        }
+    }
+
+    @Test
+    fun testIllegalConditionalTokens() {
+        val input = listOf(
+            "2 ==",
+            "== 2",
+            "2 == 2",
+            "2 == 2 1",
+            "2 == 2 ?",
+            "2 == 2 ? 1",
+            "2 == 2 ? 1 0",
+            "2 == 2 ? 1 :",
+        ).map { it.byteInputStream() }
+        input.forEach {
+            Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
+        }
+    }
+
+    @Test
+    fun testConditionWithExpressions() {
+        val input = "(2 + 2) < 2 * 2 ? 1 - 2 : (-2 == 2 - 4 ? 1 : 0)".byteInputStream()
         val expectedTree = getCond(
-            expr = getExpr(
-                factor = getNumber(2),
-                exprCont = getExprCont(
-                    op = "+",
-                    term = getTerm(getNumber(2))
+            expr = getBracketExpr(
+                getCond(
+                    getExpr(
+                        factor = getNumber(2),
+                        exprCont = getExprCont(
+                            op = "+",
+                            term = getTerm(getNumber(2))
+                        )
+                    )
                 )
             ),
             condCont = getCondCount(
-                cmp = "==",
-                condExpr = getNumberExpr(4),
-                ifExpr = getNumberExpr(1),
-                elseExpr = getNumberExpr(0),
+                cmp = "<",
+                condExpr = getExpr(
+                    factor = getNumber(2),
+                    termCont = getTermCont(getNumber(2))
+                ),
+                ifExpr = getExpr(
+                    factor = getNumber(1),
+                    exprCont = getExprCont(
+                        op = "-",
+                        term = getTerm(getNumber(2))
+                    )
+                ),
+                elseExpr = getBracketExpr(
+                    getCond(
+                        expr = getUnaryMinusExpr(getNumber(2)),
+                        condCont = getCondCount(
+                            cmp = "==",
+                            condExpr = getExpr(
+                                factor = getNumber(2),
+                                exprCont = getExprCont(
+                                    op = "-",
+                                    term = getTerm(getNumber(4))
+                                )
+                            ),
+                            ifExpr = getNumberExpr(1),
+                            elseExpr = getNumberExpr(0)
+                        )
+                    )
+                ),
             )
         )
-        val expectedCalculation = if (2 + 2 == 4) 1 else 0
+        val expectedCalculation = if ((2 + 2) < 2 * 2) 1 - 2 else (if (-2 == 2 - 4) 1 else 0)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
     }
-
 }

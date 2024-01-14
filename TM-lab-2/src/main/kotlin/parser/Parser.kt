@@ -24,7 +24,7 @@ class Parser {
                 Tree(node, listOf(parseExpr(), parseCondCont()))
             }
 
-            else -> throw ParseException("Unacceptable start of condition.txt, ${errorInfo()}")
+            else -> throw ParseException("Unacceptable start of condition, ${errorInfo()}")
         }
     }
 
@@ -38,10 +38,10 @@ class Parser {
                 val cmp = lex.curString
                 lex.nextToken()
                 val condExpr = parseExpr()
-                assertToken(Token.IF, "Unacceptable continuation of condition.txt, expected token ${Token.IF}")
+                assertToken(Token.IF, "Unacceptable continuation of condition, expected token ${Token.IF}")
                 lex.nextToken()
                 val ifExpr = parseExpr()
-                assertToken(Token.ELSE, "Unacceptable continuation of condition.txt, expected token ${Token.ELSE}")
+                assertToken(Token.ELSE, "Unacceptable continuation of condition, expected token ${Token.ELSE}")
                 lex.nextToken()
                 val elseExpr = parseExpr()
                 Tree(node, listOf(Tree(cmp), condExpr, Tree("?"), ifExpr, Tree(":"), elseExpr))
@@ -50,7 +50,7 @@ class Parser {
             Token.RBRACKET,
             Token.END -> Tree(node)
 
-            else -> throw ParseException("Unacceptable continuation of condition.txt, ${errorInfo()}")
+            else -> throw ParseException("Unacceptable continuation of condition, ${errorInfo()}")
         }
     }
 
