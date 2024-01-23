@@ -1,0 +1,2 @@
+= x + True * 5 not and 0 - 2 1
+print x
