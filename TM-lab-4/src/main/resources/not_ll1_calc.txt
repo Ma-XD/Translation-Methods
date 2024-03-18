@@ -1,0 +1,14 @@
+E -> T;
+E -> E plus T;
+E -> E minus T;
+T -> F;
+T -> T multiply F;
+F -> number;
+F -> lbracket E rbracket;
+
+plus : "\\+";
+minus : "-";
+multiply : "\\*";
+lbracket : "\\(";
+rbracket : "\\)";
+number : "[0-9]+";

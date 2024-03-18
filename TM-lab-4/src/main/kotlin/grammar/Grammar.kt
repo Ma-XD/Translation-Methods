@@ -16,7 +16,7 @@ class Grammar(
         private set
 
     init {
-        val groups  = nonTermsNotFiltered.groupBy { it.name }
+        val groups = nonTermsNotFiltered.groupBy { it.name }
         groups.values.forEach { group ->
             if (group.any { it != group[0] }) throw GrammarException("different args or returns for 0ne non terminal")
         }
@@ -24,6 +24,7 @@ class Grammar(
 
         makeFirst()
         makeFollow()
+        checkLL1()
     }
 
     private fun makeFirst() {
@@ -45,7 +46,7 @@ class Grammar(
     }
 
     fun getFist(states: List<String>): Set<String> {
-        if (states.isEmpty()) return emptySet()
+        if (states.isEmpty()) return setOf(EPS)
         val current = states[0]
         if (terms.containsKey(current)) return setOf(current)
 
@@ -84,6 +85,29 @@ class Grammar(
         }
     }
 
+    private fun checkLL1() {
+        nonTerms.keys.forEach { A ->
+            val rulesFromA = rules.filter { it.nonTermName == A }
+
+            rulesFromA.forEach { r1 ->
+                rulesFromA.forEach { r2 ->
+                    if (r1 != r2) {
+                        val alpha = r1.states[0]
+                        val betta = r2.states[0]
+                        val firstAlpha = getFist(listOf(alpha))
+                        val firstBetta = getFist(listOf(betta))
+
+                        if ((firstAlpha intersect firstBetta).isNotEmpty()) throw GrammarException("Grammar is not LL1")
+
+                        if (firstAlpha.contains(EPS)) {
+                            val followA = follow[A] ?: throw GrammarException("No follow for $A")
+                            if ((firstBetta intersect followA).isNotEmpty()) throw GrammarException("Grammar is not LL1")
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     companion object {
         const val EPS = "eps"
