@@ -1,0 +1,19 @@
+E [Int] -> T E1(T_res) { val res = E1_res; };
+E1 (acc: Int) [Int] -> add T { val acc1 = acc + T_res; } E1(acc1) { val res = E1_res; };
+E1 (acc: Int) [Int] -> sub T { val acc1 = acc - T_res; } E1(acc1) { val res = E1_res; };
+E1 (acc: Int) [Int] -> eps { val res = acc; };
+T [Int] -> F T1(F_res) { val res = T1_res; };
+T1 (acc: Int) [Int] -> mul F { val acc1 = acc * F_res; } T1(acc1) { val res = T1_res; };
+T1 (acc: Int) [Int] -> div F { val acc1 = acc / F_res; } T1(acc1) { val res = T1_res; };
+T1 (acc: Int) [Int] -> eps { val res = acc; };
+F [Int] -> lbracket E { val res = E_res; } rbracket;
+F [Int] -> n { val res = getValue().toInt(); };
+
+add : "\\+";
+sub : "-";
+mul : "\\*";
+div : "/";
+lbracket : "\\(";
+rbracket : "\\)";
+n : "[0-9]+";
+eps : "э";

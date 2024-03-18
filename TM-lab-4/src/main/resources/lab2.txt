@@ -1,0 +1,21 @@
+E -> T E1;
+E1 -> plus T E1;
+E1 -> minus T E1;
+E1 -> eps;
+T -> S T1;
+T1 -> multiply S T1;
+T1 -> eps;
+S -> minus F;
+S -> F;
+F -> function lbracket E rbracket;
+F -> lbracket E rbracket;
+F -> number;
+
+plus : "\\+";
+minus : "-";
+multiply : "\\*";
+lbracket : "\\(";
+rbracket : "\\)";
+number : "[0-9]+";
+function : "[a-z]+";
+eps : "э";
