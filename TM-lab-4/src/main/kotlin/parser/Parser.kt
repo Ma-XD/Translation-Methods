@@ -6,9 +6,9 @@ class Parser {
    fun parse(input: String): Tree {
        lex = LexicalAnalyzer(input)
        lex.nextToken()
-       val res = parseE()
+       val tree = parseE()
        assertToken(Token.END)
-       return res
+       return tree
    }
    
    private fun parseE(): Tree { 

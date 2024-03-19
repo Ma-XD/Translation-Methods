@@ -15,10 +15,10 @@ fun getGrammar(fi: Path): Grammar {
         val parser = InputGrammarParser(CommonTokenStream(lexer))
         val grammar = parser.run().grammar
 
-        println(grammar.first.toList().joinToString("\n") { it.first + " : " + it.second.joinToString(", ") })
-        println("\n")
-        println(grammar.follow.toList().joinToString("\n") { it.first + " : " + it.second.joinToString(", ") })
-        println("\n")
+//        println(grammar.first.toList().joinToString("\n") { it.first + " : " + it.second.joinToString(", ") })
+//        println("\n")
+//        println(grammar.follow.toList().joinToString("\n") { it.first + " : " + it.second.joinToString(", ") })
+//        println("\n")
 
         return grammar
     }

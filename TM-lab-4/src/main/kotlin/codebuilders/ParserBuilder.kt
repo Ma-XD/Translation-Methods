@@ -31,9 +31,9 @@ class ParserBuilder(
             |   fun parse(input: String): Tree {
             |       lex = LexicalAnalyzer(input)
             |       lex.nextToken()
-            |       val res = ${generateStart()}
+            |       val tree = ${generateStart()}
             |       assertToken(Token.END)
-            |       return res
+            |       return tree
             |   }
             |   
             |${generateNonTermsParsers()}
