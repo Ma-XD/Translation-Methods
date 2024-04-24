@@ -1,8 +1,8 @@
+import parser.Tree
 import guru.nidi.graphviz.attribute.Attributes
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.model.*
 import guru.nidi.graphviz.toGraphviz
-import parser.Tree
 import java.io.File
 
 class TreeVisualizer(tree: Tree) {
@@ -22,12 +22,10 @@ class TreeVisualizer(tree: Tree) {
     }
 
     private fun buildGraphFromTree(parent: Tree, parentId: String) {
-        if (parent.node == "n" || parent.node == "f") return
-
         val parentNode = Factory.mutNode(parentId)
         parentNode.setLabel(parent.node)
 
-        if (parent.node.endsWith('\'') && parent.children.isEmpty()
+        if (parent.node.first().isUpperCase() && parent.children.isEmpty()
         ) {
             val epsNode = Factory.mutNode(IdFactory.getId())
             epsNode.setLabel("eps")

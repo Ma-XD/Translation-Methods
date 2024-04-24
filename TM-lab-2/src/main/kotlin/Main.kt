@@ -6,10 +6,10 @@ val INPUT_DIR = File(PATH, "input")
 val OUTPUT_DIR = File(PATH, "output")
 
 fun main() {
-    val fileName = "condition.txt"
+    val fileName = "example.txt"
     val inputFile = File(INPUT_DIR, fileName)
     val outputFile = File(OUTPUT_DIR, inputFile.nameWithoutExtension)
 
-    val tree = Parser().parse(inputFile.inputStream())
+    val tree = Parser().parse(inputFile.bufferedReader().readText())
     TreeVisualizer(tree).visualize(outputFile)
 }

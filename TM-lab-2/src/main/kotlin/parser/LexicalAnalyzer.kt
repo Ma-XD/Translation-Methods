@@ -1,12 +1,13 @@
 package parser
 
-import parser.exception.LexicalException
-import java.io.IOException
-import java.io.InputStream
-import java.lang.StringBuilder
+import java.util.regex.Pattern
 
-class LexicalAnalyzer(private var source: InputStream) {
-    private var curChar = '\u0000'
+enum class Token {
+    START, END, RBRACKET, MINUS, NUMBER, LBRACKET, FUNCTION, EPS, MULTIPLY, PLUS
+}
+
+class LexicalAnalyzer(private val source: String) {
+    private val matcher = Pattern.compile("").matcher(source)
     var curPos = 0
         private set
     var curToken = Token.START
@@ -15,74 +16,41 @@ class LexicalAnalyzer(private var source: InputStream) {
         private set
 
     private companion object {
-        private const val END: Char = (-1).toChar()
-        private val OPERATIONS: Map<String, Token> = mapOf(
-            "?" to Token.IF,
-            ":" to Token.ELSE,
-            "==" to Token.EQUAL,
-            "!=" to Token.NOT_EQUAL,
-            ">" to Token.GREATER,
-            "<" to Token.LESS,
-            "+" to Token.PLUS,
-            "-" to Token.MINUS,
-            "*" to Token.MULTIPLICATION,
-            "(" to Token.LBRACKET,
-            ")" to Token.RBRACKET,
-        )
-    }
-
-    init {
-        nextChar()
-    }
-
-    private fun nextChar() {
-        curPos++
-        curChar = try {
-            source.read().toChar()
-        } catch (e: IOException) {
-            throw LexicalException("${e.message} at position $curPos")
-        }
+        private val WS = Pattern.compile("[ \t\r\n]+")
+        private val TOKENS: List<Pair<Pattern, Token>> = listOf(
+            Pattern.compile("\\)") to Token.RBRACKET, Pattern.compile("-") to Token.MINUS, Pattern.compile("[0-9]+") to Token.NUMBER, Pattern.compile("\\(") to Token.LBRACKET, Pattern.compile("[a-z]+") to Token.FUNCTION, Pattern.compile("э") to Token.EPS, Pattern.compile("\\*") to Token.MULTIPLY, Pattern.compile("\\+") to Token.PLUS
+        ).sortedBy { it.first.pattern().length }.reversed()
     }
 
     fun nextToken() {
-        readWhile(Char::isWhitespace)
-        curToken = when {
-            curChar.isDigit() -> {
-                curString = readWhile(Char::isDigit)
-                Token.NUMBER
-            }
+        skipWhiteSpaces()
+        if (curPos == source.length) {
+            curString = ""
+            curToken = Token.END
+            return
+        }
 
-            curChar.isLetter() -> {
-                curString = readWhile(Char::isLetter)
-                Token.FUNCTION
-            }
-
-            curChar == END -> {
-                curString = ""
-                Token.END
-            }
-
-            else -> {
-                curString = curChar.toString()
-                while (!OPERATIONS.containsKey(curString)) {
-                    nextChar()
-                    if (curChar == END || curChar.isWhitespace()) {
-                        throw LexicalException("Illegal character '$curChar' at position ${curPos - curString.length}")
-                    }
-                    curString += curChar
-                }
-                nextChar()
-                OPERATIONS[curString]!!
+        TOKENS.forEach { (pattern, token) ->
+            matcher.usePattern(pattern)
+            if (matcher.lookingAt()) {
+                curString = matcher.group()
+                curPos += matcher.end()
+                matcher.reset(source.substring(curPos))
+                curToken = token
+                return
             }
         }
+
+        throw LexicalException("Illegal character at position " + curPos)
     }
 
-    private fun readWhile(predicate: (Char) -> Boolean): String {
-        val buffer = StringBuilder()
-        while (predicate(curChar)) {
-            buffer.append(curChar)
-            nextChar()
+    private fun skipWhiteSpaces() {
+        matcher.usePattern(WS)
+        if (matcher.lookingAt()) {
+            curPos += matcher.end()
+            matcher.reset(source.substring(curPos))
         }
-        return buffer.toString()
     }
 }
+
+class LexicalException(message: String?) : Exception(message)

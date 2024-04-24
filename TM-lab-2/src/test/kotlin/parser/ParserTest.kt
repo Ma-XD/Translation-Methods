@@ -1,9 +1,7 @@
 package parser
 
-import parser.exception.ParseException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.lang.RuntimeException
 
 internal class ParserTest {
     private val parser = Parser()
@@ -14,17 +12,11 @@ internal class ParserTest {
         fun f(x: Int) = x * x // default function for calculations
 
         fun calc(tree: Tree): Int = when (tree.node) {
-            "n" -> {
-                tree.children
-                    .first()
-                    .node
-                    .toInt()
-            }
 
             "F" -> {
                 var i = 0
                 var f: (Int) -> Int = { it }
-                if (tree.children[i].node == "f") {
+                if (tree.children.size == 4) {
                     i++
                     f = ::f
                 }
@@ -42,79 +34,36 @@ internal class ParserTest {
 
             "T" -> {
                 var res = calc(tree.children[0])
-                var cont = tree.children[1] // T'
-                while (cont.children.isNotEmpty()) {
-                    res *= calc(cont.children[1])
-                    cont = cont.children[2] // T'
+                var next = tree.children[1] // T1
+                while (next.children.isNotEmpty()) {
+                    res *= calc(next.children[1])
+                    next = next.children[2] // T1
                 }
                 res
             }
 
             "E" -> {
                 var res = calc(tree.children[0])
-                var cont = tree.children[1] // E'
-                while (cont.children.isNotEmpty()) {
-                    val op = cont.children[0].node
-                    res += if (op == "+") calc(cont.children[1]) else -calc(cont.children[1])
-                    cont = cont.children[2] // E'
+                var next = tree.children[1] // E1
+                while (next.children.isNotEmpty()) {
+                    val op = next.children[0].node
+                    res += if (op == "+") calc(next.children[1]) else -calc(next.children[1])
+                    next = next.children[2] // E1
                 }
                 res
             }
 
-            "C" -> {
-                val c1 = calc(tree.children[0])
-                val cont = tree.children[1]
-                if (cont.children.isEmpty()) {
-                    c1
-                } else {
-                    val c2 = calc(cont.children[1])
-                    val res = when (cont.children[0].node) {
-                        "==" -> c1 == c2
-                        "!=" -> c1 != c2
-                        ">" -> c1 > c2
-                        "<" -> c1 < c2
-                        else -> throw RuntimeException()
-                    }
-                    if (res) calc(cont.children[3]) else calc(cont.children[5])
-                }
-            }
-
             else -> {
-                throw RuntimeException()
+                tree.node.toInt()
             }
         }
 
-        fun getCond(
-            expr: Tree,
-            condCont: Tree = Tree("C'")
-        ) = Tree(
-            "C", listOf(
-                expr,
-                condCont,
-            )
-        )
-
-        fun getCondCount(
-            cmp: String,
-            condExpr: Tree,
-            ifExpr: Tree,
-            elseExpr: Tree,
-        ) = Tree(
-            "C'", listOf(
-                Tree(cmp),
-                condExpr,
-                Tree("?"),
-                ifExpr,
-                Tree(":"),
-                elseExpr
-            )
-        )
 
         fun getExpr(
             factor: Tree,
             sign: (Tree) -> Tree = ::getNoSign,
-            termCont: Tree = Tree("T'"),
-            exprCont: Tree = Tree("E'")
+            termCont: Tree = Tree("T1"),
+            exprCont: Tree = Tree("E1")
         ) = Tree(
             "E", listOf(
                 Tree(
@@ -130,9 +79,9 @@ internal class ParserTest {
         fun getExprCont(
             op: String,
             term: Tree,
-            exprCont: Tree = Tree("E'")
+            exprCont: Tree = Tree("E1")
         ) = Tree(
-            "E'", listOf(
+            "E1", listOf(
                 Tree(op),
                 term,
                 exprCont
@@ -142,7 +91,7 @@ internal class ParserTest {
         fun getTerm(
             factor: Tree,
             sign: (Tree) -> Tree = ::getNoSign,
-            termCont: Tree = Tree("T'")
+            termCont: Tree = Tree("T1")
         ) = Tree(
             "T", listOf(
                 sign(factor),
@@ -154,9 +103,9 @@ internal class ParserTest {
         fun getTermCont(
             factor: Tree,
             sign: (Tree) -> Tree = ::getNoSign,
-            termCont: Tree = Tree("T'")
+            termCont: Tree = Tree("T1")
         ) = Tree(
-            "T'", listOf(
+            "T1", listOf(
                 Tree("*"),
                 sign(factor),
                 termCont
@@ -165,12 +114,7 @@ internal class ParserTest {
 
         private fun getNumber(n: Int) = Tree(
             "F", listOf(
-                Tree(
-                    "n",
-                    listOf(
-                        Tree(n.toString())
-                    )
-                )
+                Tree(n.toString())
             )
         )
 
@@ -184,11 +128,7 @@ internal class ParserTest {
 
         private fun getFunction(f: String, expr: Tree) = Tree(
             "F", listOf(
-                Tree(
-                    "f", listOf(
-                        Tree(f)
-                    )
-                ),
+                Tree(f),
                 Tree("("),
                 expr,
                 Tree(")")
@@ -219,8 +159,8 @@ internal class ParserTest {
 
     @Test
     fun testNumber() {
-        val input = "1234567890".byteInputStream()
-        val expectedTree = getCond(getNumberExpr(1234567890))
+        val input = "1234567890"
+        val expectedTree = getNumberExpr(1234567890)
         val expectedCalculation = 1234567890
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -229,12 +169,8 @@ internal class ParserTest {
 
     @Test
     fun testBrackets() {
-        val input = "(2)".byteInputStream()
-        val expectedTree = getCond(
-            getBracketExpr(
-                getCond(getNumberExpr(2))
-            )
-        )
+        val input = "(2)"
+        val expectedTree = getBracketExpr(getNumberExpr(2))
         val expectedCalculation = (2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -243,16 +179,8 @@ internal class ParserTest {
 
     @Test
     fun testDoubleBrackets() {
-        val input = "((2))".byteInputStream()
-        val expectedTree = getCond(
-            getBracketExpr(
-                getCond(
-                    getBracketExpr(
-                        getCond(getNumberExpr(2))
-                    )
-                )
-            )
-        )
+        val input = "((2))"
+        val expectedTree = getBracketExpr(getBracketExpr(getNumberExpr(2)))
         val expectedCalculation = ((2))
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -261,13 +189,8 @@ internal class ParserTest {
 
     @Test
     fun testFunction() {
-        val input = "f(2)".byteInputStream()
-        val expectedTree = getCond(
-            getFunctionExpr(
-                "f",
-                getCond(getNumberExpr(2))
-            )
-        )
+        val input = "f(2)"
+        val expectedTree = getFunctionExpr("f", getNumberExpr(2))
         val expectedCalculation = f(2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -276,50 +199,50 @@ internal class ParserTest {
 
     @Test
     fun testEmpty() {
-        val input = " ".byteInputStream()
+        val input = " "
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testTwoNumbersWithoutOperation() {
-        val input = "2 2".byteInputStream()
+        val input = "2 2"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testEmptyBrackets() {
-        val input = "()".byteInputStream()
+        val input = "()"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
-    fun testOnlyLeftBrackets() {
-        val input = "(2".byteInputStream()
+    fun testLeftBrackets() {
+        val input = "(2"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testOnlyRightBracket() {
-        val input = "2)".byteInputStream()
+        val input = "2)"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testFunctionWithoutBrackets() {
-        val input = "sin 2 ".byteInputStream()
+        val input = "sin 2 "
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testEmptyFunction() {
-        val input = "sin()".byteInputStream()
+        val input = "sin()"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testUnaryMinus() {
-        val input = "-2".byteInputStream()
-        val expectedTree = getCond(getUnaryMinusExpr(getNumber(2)))
+        val input = "-2"
+        val expectedTree = getUnaryMinusExpr(getNumber(2))
         val expectedCalculation = -2
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -328,14 +251,10 @@ internal class ParserTest {
 
     @Test
     fun testDoubleUnaryMinusWithBrackets() {
-        val input = "-(-2)".byteInputStream()
-        val expectedTree = getCond(
-            getUnaryMinusExpr(
-                getBracket(
-                    getCond(
-                        getUnaryMinusExpr(getNumber(2))
-                    )
-                )
+        val input = "-(-2)"
+        val expectedTree = getUnaryMinusExpr(
+            getBracket(
+                getUnaryMinusExpr(getNumber(2))
             )
         )
         val expectedCalculation = -(-2)
@@ -346,15 +265,8 @@ internal class ParserTest {
 
     @Test
     fun testUnaryMinusAndFunction() {
-        val input = "-f(2)".byteInputStream()
-        val expectedTree = getCond(
-            getUnaryMinusExpr(
-                getFunction(
-                    "f",
-                    getCond(getNumberExpr(2))
-                )
-            )
-        )
+        val input = "-f(2)"
+        val expectedTree = getUnaryMinusExpr(getFunction("f", getNumberExpr(2)))
         val expectedCalculation = -f(2)
         val actualTree = parser.parse(input)
         Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
@@ -363,36 +275,34 @@ internal class ParserTest {
 
     @Test
     fun testDoubleUnaryMinus() {
-        val input = "--2".byteInputStream()
+        val input = "--2"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testUnaryMinusWithoutFactor() {
-        val input = "-".byteInputStream()
+        val input = "-"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testUnaryPlus() {
-        val input = "+2".byteInputStream()
+        val input = "+2"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testUnaryMultiply() {
-        val input = "*2".byteInputStream()
+        val input = "*2"
         Assertions.assertThrows(ParseException::class.java) { parser.parse(input) }
     }
 
     @Test
     fun testMultiply() {
-        val input = "2 * 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                termCont = getTermCont(getNumber(2))
-            )
+        val input = "2 * 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            termCont = getTermCont(getNumber(2))
         )
         val expectedCalculation = 2 * 2
         val actualTree = parser.parse(input)
@@ -402,14 +312,12 @@ internal class ParserTest {
 
     @Test
     fun testDoubleMultiply() {
-        val input = "2 * 2 * 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
+        val input = "2 * 2 * 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            termCont = getTermCont(
                 factor = getNumber(2),
-                termCont = getTermCont(
-                    factor = getNumber(2),
-                    termCont = getTermCont(getNumber(2))
-                )
+                termCont = getTermCont(getNumber(2))
             )
         )
         val expectedCalculation = 2 * 2 * 2
@@ -420,14 +328,12 @@ internal class ParserTest {
 
     @Test
     fun testMultiplyAndUnaryMinus() {
-        val input = "2*-2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
+        val input = "2*-2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            termCont = getTermCont(
                 factor = getNumber(2),
-                termCont = getTermCont(
-                    factor = getNumber(2),
-                    sign = ::getUnaryMinus
-                )
+                sign = ::getUnaryMinus
             )
         )
         val expectedCalculation = 2 * -2
@@ -443,7 +349,7 @@ internal class ParserTest {
             "2 ** 2",
             "2 *+ 2",
             "(2 *)"
-        ).map { it.byteInputStream() }
+        ).map { it }
         input.forEach {
             Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
         }
@@ -451,14 +357,12 @@ internal class ParserTest {
 
     @Test
     fun testAdd() {
-        val input = "2 + 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                exprCont = getExprCont(
-                    op = "+",
-                    term = getTerm(getNumber(2))
-                )
+        val input = "2 + 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(getNumber(2))
             )
         )
         val expectedCalculation = 2 + 2
@@ -469,14 +373,12 @@ internal class ParserTest {
 
     @Test
     fun testSubtract() {
-        val input = "2 - 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                exprCont = getExprCont(
-                    op = "-",
-                    term = getTerm(getNumber(2))
-                )
+        val input = "2 - 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(getNumber(2))
             )
         )
         val expectedCalculation = 2 - 2
@@ -487,17 +389,15 @@ internal class ParserTest {
 
     @Test
     fun testDoubleAdd() {
-        val input = "2 + 2 + 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
+        val input = "2 + 2 + 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
                     op = "+",
                     term = getTerm(getNumber(2)),
-                    exprCont = getExprCont(
-                        op = "+",
-                        term = getTerm(getNumber(2)),
-                    )
                 )
             )
         )
@@ -509,17 +409,15 @@ internal class ParserTest {
 
     @Test
     fun testDoubleSubtract() {
-        val input = "2 - 2 - 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
+        val input = "2 - 2 - 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
                     op = "-",
                     term = getTerm(getNumber(2)),
-                    exprCont = getExprCont(
-                        op = "-",
-                        term = getTerm(getNumber(2)),
-                    )
                 )
             )
         )
@@ -531,17 +429,15 @@ internal class ParserTest {
 
     @Test
     fun testSubtractAndAdd() {
-        val input = "2 - 2 + 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
+        val input = "2 - 2 + 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(getNumber(2)),
                 exprCont = getExprCont(
-                    op = "-",
+                    op = "+",
                     term = getTerm(getNumber(2)),
-                    exprCont = getExprCont(
-                        op = "+",
-                        term = getTerm(getNumber(2)),
-                    )
                 )
             )
         )
@@ -553,16 +449,14 @@ internal class ParserTest {
 
     @Test
     fun testSubtractAndUnaryMinus() {
-        val input = "2--2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                exprCont = getExprCont(
-                    op = "-",
-                    term = getTerm(
-                        factor = getNumber(2),
-                        sign = ::getUnaryMinus
-                    )
+        val input = "2--2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(
+                    factor = getNumber(2),
+                    sign = ::getUnaryMinus
                 )
             )
         )
@@ -574,16 +468,14 @@ internal class ParserTest {
 
     @Test
     fun testAddAndMultiplyPriority() {
-        val input = "2 + 2 * 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                exprCont = getExprCont(
-                    op = "+",
-                    term = getTerm(
-                        factor = getNumber(2),
-                        termCont = getTermCont(getNumber(2))
-                    )
+        val input = "2 + 2 * 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(
+                    factor = getNumber(2),
+                    termCont = getTermCont(getNumber(2))
                 )
             )
         )
@@ -595,24 +487,20 @@ internal class ParserTest {
 
     @Test
     fun testAddAndMultiplyWithBracketsPriority() {
-        val input = "(2 + 2) * 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getBracket(
-                    getCond(
-                        getExpr(
-                            factor = getNumber(2),
-                            exprCont = getExprCont(
-                                op = "+",
-                                term = getTerm(
-                                    factor = getNumber(2)
-                                )
-                            )
+        val input = "(2 + 2) * 2"
+        val expectedTree = getExpr(
+            factor = getBracket(
+                getExpr(
+                    factor = getNumber(2),
+                    exprCont = getExprCont(
+                        op = "+",
+                        term = getTerm(
+                            factor = getNumber(2)
                         )
                     )
-                ),
-                termCont = getTermCont(getNumber(2))
-            )
+                )
+            ),
+            termCont = getTermCont(getNumber(2))
         )
         val expectedCalculation = (2 + 2) * 2
         val actualTree = parser.parse(input)
@@ -622,17 +510,15 @@ internal class ParserTest {
 
     @Test
     fun testMultiplyAndAddPriority() {
-        val input = "2 * 2 + 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(2),
-                termCont = getTermCont(
-                    factor = getNumber(2)
-                ),
-                exprCont = getExprCont(
-                    op = "+",
-                    term = getTerm(getNumber(2))
-                )
+        val input = "2 * 2 + 2"
+        val expectedTree = getExpr(
+            factor = getNumber(2),
+            termCont = getTermCont(
+                factor = getNumber(2)
+            ),
+            exprCont = getExprCont(
+                op = "+",
+                term = getTerm(getNumber(2))
             )
         )
         val expectedCalculation = 2 * 2 + 2
@@ -643,23 +529,21 @@ internal class ParserTest {
 
     @Test
     fun testManyOperationsPriority() {
-        val input = "6 * 5 - 4 * 3 - 2 * 2".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getNumber(6),
-                termCont = getTermCont(getNumber(5)),
+        val input = "6 * 5 - 4 * 3 - 2 * 2"
+        val expectedTree = getExpr(
+            factor = getNumber(6),
+            termCont = getTermCont(getNumber(5)),
+            exprCont = getExprCont(
+                op = "-",
+                term = getTerm(
+                    factor = getNumber(4),
+                    termCont = getTermCont(getNumber(3))
+                ),
                 exprCont = getExprCont(
                     op = "-",
                     term = getTerm(
-                        factor = getNumber(4),
-                        termCont = getTermCont(getNumber(3))
-                    ),
-                    exprCont = getExprCont(
-                        op = "-",
-                        term = getTerm(
-                            factor = getNumber(2),
-                            termCont = getTermCont(getNumber(2))
-                        )
+                        factor = getNumber(2),
+                        termCont = getTermCont(getNumber(2))
                     )
                 )
             )
@@ -681,7 +565,7 @@ internal class ParserTest {
             "2 -* 2",
             "(2 +)",
             "(2 -)",
-        ).map { it.byteInputStream() }
+        ).map { it }
         input.forEach {
             Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
         }
@@ -689,45 +573,37 @@ internal class ParserTest {
 
     @Test
     fun testFromExample() {
-        val input = "(1+2)*sin(-3*(7-4)+2)".byteInputStream()
-        val expectedTree = getCond(
-            getExpr(
-                factor = getBracket(
-                    getCond(
-                        getExpr(
-                            factor = getNumber(1),
-                            exprCont = getExprCont(
-                                op = "+",
-                                term = getTerm(getNumber(2))
-                            )
-                        )
+        val input = "(1+2)*sin(-3*(7-4)+2)"
+        val expectedTree = getExpr(
+            factor = getBracket(
+                getExpr(
+                    factor = getNumber(1),
+                    exprCont = getExprCont(
+                        op = "+",
+                        term = getTerm(getNumber(2))
                     )
-                ),
-                termCont = getTermCont(
-                    factor = getFunction(
-                        f = "sin",
-                        getCond(
-                            getExpr(
-                                factor = getNumber(3),
-                                sign = ::getUnaryMinus,
-                                termCont = getTermCont(
-                                    factor = getBracket(
-                                        getCond(
-                                            getExpr(
-                                                factor = getNumber(7),
-                                                exprCont = getExprCont(
-                                                    op = "-",
-                                                    term = getTerm(getNumber(4))
-                                                )
-                                            )
-                                        )
+                )
+            ),
+            termCont = getTermCont(
+                factor = getFunction(
+                    f = "sin",
+                    getExpr(
+                        factor = getNumber(3),
+                        sign = ::getUnaryMinus,
+                        termCont = getTermCont(
+                            factor = getBracket(
+                                getExpr(
+                                    factor = getNumber(7),
+                                    exprCont = getExprCont(
+                                        op = "-",
+                                        term = getTerm(getNumber(4))
                                     )
-                                ),
-                                exprCont = getExprCont(
-                                    op = "+",
-                                    term = getTerm(getNumber(2))
                                 )
                             )
+                        ),
+                        exprCont = getExprCont(
+                            op = "+",
+                            term = getTerm(getNumber(2))
                         )
                     )
                 )
@@ -740,97 +616,4 @@ internal class ParserTest {
         Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
     }
 
-    @Test
-    fun testCompare() {
-        listOf(
-            Triple("1 == 2 ? 1 : 0", "==", 0),
-            Triple("1 != 2 ? 1 : 0", "!=", 1),
-            Triple("1 > 2 ? 1 : 0", ">", 0),
-            Triple("1 < 2 ? 1 : 0", "<", 1),
-        ).forEach { args ->
-            val expectedTree = getCond(
-                expr = getNumberExpr(1),
-                condCont = getCondCount(
-                    cmp = args.second,
-                    condExpr = getNumberExpr(2),
-                    ifExpr = getNumberExpr(1),
-                    elseExpr = getNumberExpr(0),
-                )
-            )
-            val expectedCalculation = args.third
-            val actualTree = parser.parse(args.first.byteInputStream())
-            Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
-            Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
-        }
-    }
-
-    @Test
-    fun testIllegalConditionalTokens() {
-        val input = listOf(
-            "2 ==",
-            "== 2",
-            "2 == 2",
-            "2 == 2 1",
-            "2 == 2 ?",
-            "2 == 2 ? 1",
-            "2 == 2 ? 1 0",
-            "2 == 2 ? 1 :",
-        ).map { it.byteInputStream() }
-        input.forEach {
-            Assertions.assertThrows(ParseException::class.java) { parser.parse(it) }
-        }
-    }
-
-    @Test
-    fun testConditionWithExpressions() {
-        val input = "(2 + 2) < 2 * 2 ? 1 - 2 : (-2 == 2 - 4 ? 1 : 0)".byteInputStream()
-        val expectedTree = getCond(
-            expr = getBracketExpr(
-                getCond(
-                    getExpr(
-                        factor = getNumber(2),
-                        exprCont = getExprCont(
-                            op = "+",
-                            term = getTerm(getNumber(2))
-                        )
-                    )
-                )
-            ),
-            condCont = getCondCount(
-                cmp = "<",
-                condExpr = getExpr(
-                    factor = getNumber(2),
-                    termCont = getTermCont(getNumber(2))
-                ),
-                ifExpr = getExpr(
-                    factor = getNumber(1),
-                    exprCont = getExprCont(
-                        op = "-",
-                        term = getTerm(getNumber(2))
-                    )
-                ),
-                elseExpr = getBracketExpr(
-                    getCond(
-                        expr = getUnaryMinusExpr(getNumber(2)),
-                        condCont = getCondCount(
-                            cmp = "==",
-                            condExpr = getExpr(
-                                factor = getNumber(2),
-                                exprCont = getExprCont(
-                                    op = "-",
-                                    term = getTerm(getNumber(4))
-                                )
-                            ),
-                            ifExpr = getNumberExpr(1),
-                            elseExpr = getNumberExpr(0)
-                        )
-                    )
-                ),
-            )
-        )
-        val expectedCalculation = if ((2 + 2) < 2 * 2) 1 - 2 else (if (-2 == 2 - 4) 1 else 0)
-        val actualTree = parser.parse(input)
-        Assertions.assertEquals(expectedTree, actualTree, BUILDING_MESSAGE)
-        Assertions.assertEquals(expectedCalculation, calc(actualTree), CALCULATION_MESSAGE)
-    }
 }

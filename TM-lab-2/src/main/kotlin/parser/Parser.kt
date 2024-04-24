@@ -1,224 +1,169 @@
 package parser
 
-import parser.exception.ParseException
-import java.io.InputStream
-
 class Parser {
     private lateinit var lex: LexicalAnalyzer
 
-    fun parse(input: InputStream): Tree {
+    fun parse(input: String): Tree {
         lex = LexicalAnalyzer(input)
         lex.nextToken()
-        val res = parseCond()
-        assertToken(Token.END, "Unacceptable end token")
+        val res = parseE()
+        assertToken(Token.END)
         return res
     }
 
-    /**
-     * C  -> EC'
-     */
-    private fun parseCond(): Tree {
-        val node = "C"
-        return when (lex.curToken) {
-            Token.NUMBER,
-            Token.LBRACKET,
-            Token.FUNCTION,
-            Token.MINUS -> {
-                Tree(node, listOf(parseExpr(), parseCondCont()))
-            }
-
-            else -> throw ParseException("Unacceptable start of condition, ${errorInfo()}")
-        }
-    }
-
-    /**
-     * C' -> pE?E:E
-     *
-     * C' -> eps
-     */
-    private fun parseCondCont(): Tree {
-        val node = "C'"
-        return when (lex.curToken) {
-            Token.EQUAL,
-            Token.NOT_EQUAL,
-            Token.GREATER,
-            Token.LESS -> {
-                val cmp = lex.curString
-                lex.nextToken()
-                val condExpr = parseExpr()
-                assertToken(Token.IF, "Unacceptable continuation of condition, expected token ${Token.IF}")
-                lex.nextToken()
-                val ifExpr = parseExpr()
-                assertToken(Token.ELSE, "Unacceptable continuation of condition, expected token ${Token.ELSE}")
-                lex.nextToken()
-                val elseExpr = parseExpr()
-                Tree(node, listOf(Tree(cmp), condExpr, Tree("?"), ifExpr, Tree(":"), elseExpr))
-            }
-
-            Token.RBRACKET,
-            Token.END -> Tree(node)
-
-            else -> throw ParseException("Unacceptable continuation of condition, ${errorInfo()}")
-        }
-    }
-
-    /**
-     * E  -> TE'
-     */
-    private fun parseExpr(): Tree {
+    private fun parseE(): Tree {
         val node = "E"
+        val children = ArrayList<Tree>()
         return when (lex.curToken) {
-            Token.NUMBER,
-            Token.LBRACKET,
-            Token.FUNCTION,
-            Token.MINUS -> Tree(node, listOf(parseTerm(), parseExprCont()))
-
-            else -> throw ParseException("Unacceptable start of expression, ${errorInfo()}")
-        }
-    }
-
-    /**
-     * E' -> +TE'
-     *
-     * E' -> -TE'
-     *
-     * E' -> eps
-     */
-    private fun parseExprCont(): Tree {
-        val node = "E'"
-        return when (lex.curToken) {
-            Token.PLUS,
-            Token.MINUS -> {
-                val op = lex.curString
-                lex.nextToken()
-                Tree(node, listOf(Tree(op), parseTerm(), parseExprCont()))
+            Token.MINUS, Token.NUMBER, Token.LBRACKET, Token.FUNCTION -> {
+                children.add(parseT())
+                children.add(parseE1())
+                Tree(node, children = children)
             }
 
-            Token.EQUAL,
-            Token.NOT_EQUAL,
-            Token.GREATER,
-            Token.LESS,
-            Token.IF,
-            Token.ELSE,
-            Token.RBRACKET,
-            Token.END -> Tree(node)
 
-            else -> throw ParseException("Unacceptable continuation of expression, ${errorInfo()}")
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
         }
     }
 
-    /**
-     * T  -> ST'
-     */
-    private fun parseTerm(): Tree {
+    private fun parseE1(): Tree {
+        val node = "E1"
+        val children = ArrayList<Tree>()
+        return when (lex.curToken) {
+            Token.PLUS -> {
+                assertToken(Token.PLUS)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                children.add(parseT())
+                children.add(parseE1())
+                Tree(node, children = children)
+            }
+
+            Token.MINUS -> {
+                assertToken(Token.MINUS)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                children.add(parseT())
+                children.add(parseE1())
+                Tree(node, children = children)
+            }
+
+            Token.RBRACKET, Token.END -> {
+
+                Tree(node, children = children)
+            }
+
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
+        }
+    }
+
+    private fun parseT(): Tree {
         val node = "T"
+        val children = ArrayList<Tree>()
         return when (lex.curToken) {
-            Token.NUMBER,
-            Token.LBRACKET,
-            Token.FUNCTION,
-            Token.MINUS -> Tree(node, listOf(parseSign(), parseTermCont()))
-
-            else -> throw ParseException("Unacceptable start of term, ${errorInfo()}")
-        }
-    }
-
-    /**
-     * T' -> *ST'
-     *
-     * T' -> eps
-     */
-    private fun parseTermCont(): Tree {
-        val node = "T'"
-        return when (lex.curToken) {
-            Token.MULTIPLICATION -> {
-                lex.nextToken()
-                Tree(node, listOf(Tree("*"), parseSign(), parseTermCont()))
+            Token.MINUS, Token.NUMBER, Token.LBRACKET, Token.FUNCTION -> {
+                children.add(parseS())
+                children.add(parseT1())
+                Tree(node, children = children)
             }
 
-            Token.EQUAL,
-            Token.NOT_EQUAL,
-            Token.GREATER,
-            Token.LESS,
-            Token.IF,
-            Token.ELSE,
-            Token.PLUS,
-            Token.MINUS,
-            Token.RBRACKET,
-            Token.END -> Tree(node)
 
-            else -> throw ParseException("Unacceptable continuation of term, ${errorInfo()}")
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
         }
     }
 
-    /**
-     * S  -> -F
-     *
-     * S  -> F
-     */
-    private fun parseSign(): Tree {
+    private fun parseT1(): Tree {
+        val node = "T1"
+        val children = ArrayList<Tree>()
+        return when (lex.curToken) {
+            Token.MULTIPLY -> {
+                assertToken(Token.MULTIPLY)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                children.add(parseS())
+                children.add(parseT1())
+                Tree(node, children = children)
+            }
+
+            Token.RBRACKET, Token.MINUS, Token.END, Token.PLUS -> {
+
+                Tree(node, children = children)
+            }
+
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
+        }
+    }
+
+    private fun parseS(): Tree {
         val node = "S"
+        val children = ArrayList<Tree>()
         return when (lex.curToken) {
-            Token.NUMBER,
-            Token.LBRACKET,
-            Token.FUNCTION -> Tree(node, listOf(parseFactor()))
-
             Token.MINUS -> {
+                assertToken(Token.MINUS)
+                children.add(Tree(lex.curString))
                 lex.nextToken()
-                Tree(node, listOf(Tree("-"), parseFactor()))
+                children.add(parseF())
+                Tree(node, children = children)
             }
 
-            else -> throw ParseException("Unacceptable start of sign, ${errorInfo()}")
+            Token.NUMBER, Token.LBRACKET, Token.FUNCTION -> {
+                children.add(parseF())
+                Tree(node, children = children)
+            }
+
+
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
         }
     }
 
-    /**
-     * F  -> n
-     *
-     * F  -> (E)
-     *
-     * F  -> f(E)
-     */
-    private fun parseFactor(): Tree {
+    private fun parseF(): Tree {
         val node = "F"
-        val res: List<Tree> = when (lex.curToken) {
-            Token.NUMBER -> {
-                val value = Tree(lex.curString)
+        val children = ArrayList<Tree>()
+        return when (lex.curToken) {
+            Token.FUNCTION -> {
+                assertToken(Token.FUNCTION)
+                children.add(Tree(lex.curString))
                 lex.nextToken()
-                listOf(Tree("n", listOf(value)))
+                assertToken(Token.LBRACKET)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                children.add(parseE())
+                assertToken(Token.RBRACKET)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                Tree(node, children = children)
             }
 
             Token.LBRACKET -> {
-                parseBracket()
-            }
-
-            Token.FUNCTION -> {
-                val value = Tree(lex.curString)
+                assertToken(Token.LBRACKET)
+                children.add(Tree(lex.curString))
                 lex.nextToken()
-                assertToken(Token.LBRACKET, "Function must have brackets")
-                parseBracket(arrayListOf(Tree("f", listOf(value))))
+                children.add(parseE())
+                assertToken(Token.RBRACKET)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                Tree(node, children = children)
             }
 
-            else -> throw ParseException("Unacceptable start of factor, ${errorInfo()}")
+            Token.NUMBER -> {
+                assertToken(Token.NUMBER)
+                children.add(Tree(lex.curString))
+                lex.nextToken()
+                Tree(node, children = children)
+            }
+
+
+            else -> throw ParseException("Unexpected end token: " + errorInfo())
         }
-
-        return Tree(node, res)
     }
 
-    private fun parseBracket(res: ArrayList<Tree> = arrayListOf()): List<Tree> {
-        lex.nextToken()
-        res.add(Tree("("))
-        res.add(parseCond())
-        assertToken(Token.RBRACKET, "Closing bracket missed")
-        res.add(Tree(")"))
-        lex.nextToken()
-        return res
-    }
-
-    private fun assertToken(expected: Token, message: String) {
+    private fun assertToken(expected: Token) {
         if (lex.curToken != expected) {
-            throw ParseException("$message, ${errorInfo()}")
+            throw ParseException("Unexpected end token: " + errorInfo())
         }
     }
 
-    private fun errorInfo() = "found token ${lex.curToken.name} at position ${lex.curPos - lex.curString.length}"
+    private fun errorInfo() = "found token " + lex.curToken.name + " at position " + (lex.curPos - lex.curString.length)
 }
+
+class ParseException(message: String?) : Exception(message)
