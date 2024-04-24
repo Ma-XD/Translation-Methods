@@ -5,3 +5,12 @@
 * LL(1)-грамматики, нисходящий разбор
 * Поддержка синтезируемых и наследуемых атрибутов
 * Для тестирования сгенерировать с помощью вашего генератора калькулятор
+
+### Навигация по проекту
+
+* [g4 файл для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/antlr)
+* [сгенерированный код для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java)
+* [классы для работы с входной грамматикой](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/grammar)
+* [генераторы парсера и лексера](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/codebuilders)
+* [сгенерированные парсер и лексер](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/parser)
+* [тесты калькулятора](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/test/kotlin)
