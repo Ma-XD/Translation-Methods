@@ -19,3 +19,5 @@ begin
 end.
 ```
 
+### В качестве языка был выбран Python
+Транслированный код лежит в пакете [python](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-3/src/main/python)  
