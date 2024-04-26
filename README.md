@@ -1,6 +1,6 @@
 # Translation-Methods
 
-## Решения лабораторных работы по курсу "Методы трансляции"
+## Решения лабораторных работ по курсу "Методы трансляции"
 
 ### 1. [Ручное построение нисходящих парсеров](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-2)
 ### 2. [Использование автоматического генератора анализаторов ANTLR](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-3)
