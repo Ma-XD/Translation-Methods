@@ -9,7 +9,7 @@
 ### Навигация по проекту
 
 * [g4 файл для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/antlr)
-* [сгенерированный код для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java)
+* [сгенерированный с помощью antlr код для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java)
 * [классы для работы с входной грамматикой](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/grammar)
 * [генераторы парсера и лексера](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/codebuilders)
 * [сгенерированные парсер и лексер](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/parser)
