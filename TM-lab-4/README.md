@@ -17,8 +17,8 @@
 * сгенерированный с помощью antlr [код](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java) для парсинга входной грамматики
 * [классы](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/grammar) для работы с входной грамматикой
 * [генераторы](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/codebuilders) парсера и лексера
-* входная [грамматика](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/resources/calc.txt) для калькулятора
 * запуск генераторов по входной грамматике [main](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/kotlin/Main.kt)
-* [сгенерированные парсер и лексер](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/parser)
+* входная [грамматика](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/resources/calc.txt) для калькулятора
+* сгенерированные [парсер и лексер](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/parser) для калькулятора
 * [дерево разбора](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/resources/calc_tree.svg), которое парсер построил для выражения `16 / (3 + 1) / 2`
 * [тесты калькулятора](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/test/kotlin)
