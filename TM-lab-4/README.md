@@ -1,16 +1,24 @@
 # Лабораторная работа по написанию генераторов парсеров
 
+## Задание
+
 Необходимо написать некоторый упрощенный аналог генератора трансляторов. Рекомендуется брать за основу синтаксис ANTLR или Bison. Рекомендуется для чтения входного файла с грамматикой сгенерировать разборщик с помощью ANTLR или Bison.
 
-* LL(1)-грамматики, нисходящий разбор
-* Поддержка синтезируемых и наследуемых атрибутов
-* Для тестирования сгенерировать с помощью вашего генератора калькулятор
+# Реализовать
 
-### Навигация по проекту
+* Поддержку LL(1)-грамматик
+* Поддержку синтезируемых и наследуемых атрибутов
 
-* [g4 файл для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/antlr)
-* [сгенерированный с помощью antlr код для парсинга входной грамматики](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java)
-* [классы для работы с входной грамматикой](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/grammar)
-* [генераторы парсера и лексера](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/codebuilders)
+Для тестирования сгенерировать с помощью вашего генератора калькулятор
+
+## Навигация по проекту
+
+* [g4 файл](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/antlr) для парсинга входной грамматики
+* сгенерированный с помощью antlr [код](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/java) для парсинга входной грамматики
+* [классы](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/grammar) для работы с входной грамматикой
+* [генераторы](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/codebuilders) парсера и лексера
+* [грамматика](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/resources/calc.txt) для калькулятора
+* запуск генераторов по входной грамматике [main](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/kotlin/Main.kt)
 * [сгенерированные парсер и лексер](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/main/kotlin/parser)
+* [дерево разбора](https://github.com/Ma-XD/Translation-Methods/blob/main/TM-lab-4/src/main/resources/calc_tree.svg), которое парсер построил для выражения `16 / (3 + 1) / 2`
 * [тесты калькулятора](https://github.com/Ma-XD/Translation-Methods/tree/main/TM-lab-4/src/test/kotlin)
